@@ -95,7 +95,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Contact form handling
     const contactForm = document.getElementById('contactForm');
     
-    contactForm.addEventListener('submit', function(e) {
+    if (contactForm) {
+        contactForm.addEventListener('submit', function(e) {
         e.preventDefault();
         
         // Get form data
@@ -110,7 +111,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Reset form
         this.reset();
-    });
+        });
+    }
 
     // Scroll animations
     const observerOptions = {
@@ -152,7 +154,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Form validation
-    const inputs = contactForm.querySelectorAll('input, select, textarea');
+    const inputs = contactForm ? contactForm.querySelectorAll('input, select, textarea') : [];
     
     inputs.forEach(input => {
         input.addEventListener('blur', function() {
@@ -174,24 +176,29 @@ document.addEventListener('DOMContentLoaded', function() {
     // Email validation
     const emailInput = document.getElementById('email');
     
-    emailInput.addEventListener('blur', function() {
+    if (emailInput) {
+        emailInput.addEventListener('blur', function() {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (this.value && !emailRegex.test(this.value)) {
             this.classList.add('error');
             this.style.borderColor = '#FF3B30';
         }
-    });
+        });
+    }
 
     // Phone validation
     const phoneInput = document.getElementById('phone');
     
-    phoneInput.addEventListener('input', function() {
+    if (phoneInput) {
+        phoneInput.addEventListener('input', function() {
         // Remove non-numeric characters
         this.value = this.value.replace(/[^0-9-]/g, '');
-    });
+        });
+    }
 
     // Add loading state to submit button
-    contactForm.addEventListener('submit', function() {
+    if (contactForm) {
+        contactForm.addEventListener('submit', function() {
         const submitButton = this.querySelector('.submit-button');
         submitButton.textContent = 'שולח...';
         submitButton.disabled = true;
@@ -201,7 +208,8 @@ document.addEventListener('DOMContentLoaded', function() {
             submitButton.textContent = 'שלח פנייה';
             submitButton.disabled = false;
         }, 2000);
-    });
+        });
+    }
 
     // Lazy loading for project images
     const projectImages = document.querySelectorAll('.project-image');

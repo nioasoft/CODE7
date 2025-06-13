@@ -421,9 +421,9 @@ function openServiceModal(serviceId = null) {
     
     modal.classList.add('show');
     
-    document.getElementById('saveService').onclick = () => {
+    document.getElementById('saveService').addEventListener('click', () => {
         saveService(serviceId);
-    };
+    });
 }
 
 // Save service
@@ -632,7 +632,7 @@ function createProjectModal() {
         <div class="modal-content">
             <div class="modal-header">
                 <h3>הוסף/ערוך פרויקט</h3>
-                <button class="modal-close" onclick="closeModal('projectModal')">&times;</button>
+                <button class="modal-close">&times;</button>
             </div>
             <div class="modal-body">
                 <form id="projectForm">
