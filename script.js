@@ -1,0 +1,294 @@
+// Wait for DOM to load
+document.addEventListener('DOMContentLoaded', function() {
+    // Mobile menu toggle
+    const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+    const navMenu = document.getElementById('navMenu');
+    
+    mobileMenuToggle.addEventListener('click', function() {
+        this.classList.toggle('active');
+        navMenu.classList.toggle('active');
+    });
+
+    // Close mobile menu when clicking on a link
+    const navLinks = document.querySelectorAll('.nav-link');
+    navLinks.forEach(link => {
+        link.addEventListener('click', () => {
+            mobileMenuToggle.classList.remove('active');
+            navMenu.classList.remove('active');
+        });
+    });
+
+    // Header scroll effect
+    const header = document.getElementById('header');
+    let lastScroll = 0;
+    
+    window.addEventListener('scroll', () => {
+        const currentScroll = window.pageYOffset;
+        
+        if (currentScroll > 100) {
+            header.classList.add('scrolled');
+        } else {
+            header.classList.remove('scrolled');
+        }
+        
+        lastScroll = currentScroll;
+    });
+
+    // Active navigation link
+    const sections = document.querySelectorAll('section[id]');
+    
+    function setActiveLink() {
+        const scrollY = window.pageYOffset;
+        
+        sections.forEach(section => {
+            const sectionHeight = section.offsetHeight;
+            const sectionTop = section.offsetTop - 100;
+            const sectionId = section.getAttribute('id');
+            const correspondingLink = document.querySelector(`.nav-link[href="#${sectionId}"]`);
+            
+            if (scrollY > sectionTop && scrollY <= sectionTop + sectionHeight) {
+                navLinks.forEach(link => link.classList.remove('active'));
+                if (correspondingLink) {
+                    correspondingLink.classList.add('active');
+                }
+            }
+        });
+    }
+    
+    window.addEventListener('scroll', setActiveLink);
+
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+
+    // FAQ Accordion
+    const faqItems = document.querySelectorAll('.faq-item');
+    
+    faqItems.forEach(item => {
+        const question = item.querySelector('.faq-question');
+        
+        question.addEventListener('click', () => {
+            const isActive = item.classList.contains('active');
+            
+            // Close all FAQ items
+            faqItems.forEach(faq => {
+                faq.classList.remove('active');
+            });
+            
+            // Open clicked item if it wasn't active
+            if (!isActive) {
+                item.classList.add('active');
+            }
+        });
+    });
+
+    // Contact form handling
+    const contactForm = document.getElementById('contactForm');
+    
+    contactForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Get form data
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData);
+        
+        // Here you would normally send the data to a server
+        console.log('Form Data:', data);
+        
+        // Show success message
+        alert('תודה על פנייתך! נחזור אליך בהקדם.');
+        
+        // Reset form
+        this.reset();
+    });
+
+    // Scroll animations
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -100px 0px'
+    };
+
+    const observer = new IntersectionObserver(function(entries) {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+                observer.unobserve(entry.target);
+            }
+        });
+    }, observerOptions);
+
+    // Observe elements for animation
+    const animatedElements = document.querySelectorAll('.service-card, .project-card, .testimonial-card, .faq-item');
+    
+    animatedElements.forEach((el, index) => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(30px)';
+        el.style.transition = `opacity 0.6s ease ${index * 0.1}s, transform 0.6s ease ${index * 0.1}s`;
+        observer.observe(el);
+    });
+
+    // Parallax effect for hero background shapes
+    const shapes = document.querySelectorAll('.geometric-shape');
+    
+    window.addEventListener('scroll', () => {
+        const scrolled = window.pageYOffset;
+        
+        shapes.forEach((shape, index) => {
+            const speed = 0.5 + (index * 0.1);
+            const yPos = -(scrolled * speed);
+            shape.style.transform = `translateY(${yPos}px)`;
+        });
+    });
+
+    // Form validation
+    const inputs = contactForm.querySelectorAll('input, select, textarea');
+    
+    inputs.forEach(input => {
+        input.addEventListener('blur', function() {
+            if (this.hasAttribute('required') && !this.value) {
+                this.classList.add('error');
+                this.style.borderColor = '#FF3B30';
+            } else {
+                this.classList.remove('error');
+                this.style.borderColor = '';
+            }
+        });
+        
+        input.addEventListener('focus', function() {
+            this.classList.remove('error');
+            this.style.borderColor = '';
+        });
+    });
+
+    // Email validation
+    const emailInput = document.getElementById('email');
+    
+    emailInput.addEventListener('blur', function() {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (this.value && !emailRegex.test(this.value)) {
+            this.classList.add('error');
+            this.style.borderColor = '#FF3B30';
+        }
+    });
+
+    // Phone validation
+    const phoneInput = document.getElementById('phone');
+    
+    phoneInput.addEventListener('input', function() {
+        // Remove non-numeric characters
+        this.value = this.value.replace(/[^0-9-]/g, '');
+    });
+
+    // Add loading state to submit button
+    contactForm.addEventListener('submit', function() {
+        const submitButton = this.querySelector('.submit-button');
+        submitButton.textContent = 'שולח...';
+        submitButton.disabled = true;
+        
+        // Reset button after 2 seconds (simulating server response)
+        setTimeout(() => {
+            submitButton.textContent = 'שלח פנייה';
+            submitButton.disabled = false;
+        }, 2000);
+    });
+
+    // Lazy loading for project images
+    const projectImages = document.querySelectorAll('.project-image');
+    
+    const imageObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                // Here you would normally load the actual image
+                entry.target.style.opacity = '1';
+                imageObserver.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.1 });
+
+    projectImages.forEach(img => {
+        img.style.opacity = '0';
+        img.style.transition = 'opacity 0.6s ease';
+        imageObserver.observe(img);
+    });
+
+    // Add hover effect to project cards
+    const projectCards = document.querySelectorAll('.project-card');
+    
+    projectCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-10px) scale(1.02)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = '';
+        });
+    });
+
+    // Service cards hover effect
+    const serviceCards = document.querySelectorAll('.service-card');
+    
+    serviceCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            const icon = this.querySelector('.service-icon');
+            icon.style.transform = 'scale(1.1) rotate(5deg)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            const icon = this.querySelector('.service-icon');
+            icon.style.transform = '';
+        });
+    });
+
+    // Initialize animations on page load
+    window.addEventListener('load', () => {
+        document.body.classList.add('loaded');
+        
+        // Animate hero content
+        const heroTitle = document.querySelector('.hero-title');
+        const heroSubtitle = document.querySelector('.hero-subtitle');
+        const ctaButton = document.querySelector('.cta-button');
+        
+        setTimeout(() => {
+            heroTitle.style.opacity = '1';
+            heroTitle.style.transform = 'translateY(0)';
+        }, 200);
+        
+        setTimeout(() => {
+            heroSubtitle.style.opacity = '1';
+            heroSubtitle.style.transform = 'translateY(0)';
+        }, 400);
+        
+        setTimeout(() => {
+            ctaButton.style.opacity = '1';
+            ctaButton.style.transform = 'translateY(0)';
+        }, 600);
+    });
+
+    // Set initial styles for hero animations
+    const heroTitle = document.querySelector('.hero-title');
+    const heroSubtitle = document.querySelector('.hero-subtitle');
+    const ctaButton = document.querySelector('.cta-button');
+    
+    heroTitle.style.opacity = '0';
+    heroTitle.style.transform = 'translateY(30px)';
+    heroTitle.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+    
+    heroSubtitle.style.opacity = '0';
+    heroSubtitle.style.transform = 'translateY(30px)';
+    heroSubtitle.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+    
+    ctaButton.style.opacity = '0';
+    ctaButton.style.transform = 'translateY(30px)';
+    ctaButton.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+});
