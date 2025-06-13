@@ -815,6 +815,9 @@ function saveProject(projectId) {
     closeModal('projectModal');
     showNotification('הפרויקט נשמר בהצלחה', 'success');
     
+    // Force update main website
+    triggerMainSiteUpdate();
+    
     // Update preview if open
     if (window.websitePreview && window.websitePreview.isPreviewOpen) {
         window.websitePreview.updatePreview();
@@ -868,6 +871,28 @@ function updateSiteData(key, value) {
     
     // Update the actual website data
     localStorage.setItem('digitalCraftData', JSON.stringify(data));
+}
+
+// Trigger main site update
+function triggerMainSiteUpdate() {
+    // Dispatch a storage event to notify the main site
+    window.dispatchEvent(new StorageEvent('storage', {
+        key: 'digitalCraftData',
+        newValue: localStorage.getItem('digitalCraftData'),
+        url: window.location.href
+    }));
+    
+    // Also try to update any open main site tabs
+    try {
+        if (window.opener && !window.opener.closed) {
+            window.opener.postMessage({
+                type: 'dataUpdate',
+                data: localStorage.getItem('digitalCraftData')
+            }, '*');
+        }
+    } catch (e) {
+        console.log('Could not communicate with parent window:', e);
+    }
 }
 
 function getDefaultSiteData() {

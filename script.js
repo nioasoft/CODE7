@@ -315,9 +315,11 @@ document.addEventListener('DOMContentLoaded', function() {
 // Load dynamic content from admin data
 function loadDynamicContent() {
     const adminData = localStorage.getItem('digitalCraftData');
+    console.log('Loading dynamic content...', adminData ? 'Data found' : 'No data');
     if (adminData) {
         try {
             const data = JSON.parse(adminData);
+            console.log('Parsed data:', data);
             
             // Update hero section
             if (data.hero) {
@@ -334,14 +336,18 @@ function loadDynamicContent() {
             
             // Update projects with images
             if (data.projects) {
+                console.log('Updating projects:', data.projects);
                 const projectCards = document.querySelectorAll('.project-card');
+                console.log('Found project cards:', projectCards.length);
                 data.projects.forEach((project, index) => {
-                    if (projectCards[index] && project.image) {
+                    console.log(`Processing project ${index}:`, project);
+                    if (projectCards[index]) {
                         const projectImage = projectCards[index].querySelector('.project-image');
                         const projectName = projectCards[index].querySelector('h3');
                         const projectDesc = projectCards[index].querySelector('p');
                         
-                        if (projectImage) {
+                        if (projectImage && project.image) {
+                            console.log(`Updating image for project ${index}:`, project.image);
                             projectImage.innerHTML = `<img src="${project.image}" alt="${project.name}" style="width: 100%; height: 100%; object-fit: cover;">`;
                         }
                         if (projectName) {
@@ -393,9 +399,20 @@ function updateFromAdmin(data) {
     }
 }
 
-// Listen for storage changes
+// Listen for storage changes (including custom dispatched events)
 window.addEventListener('storage', function(e) {
     if (e.key === 'digitalCraftData') {
+        console.log('Data updated, reloading content...');
+        setTimeout(() => {
+            loadDynamicContent();
+        }, 100);
+    }
+});
+
+// Listen for messages from admin panel
+window.addEventListener('message', function(e) {
+    if (e.data && e.data.type === 'dataUpdate') {
+        console.log('Received data update from admin panel');
         loadDynamicContent();
     }
 });
