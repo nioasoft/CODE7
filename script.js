@@ -261,37 +261,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load dynamic content from admin data
     loadDynamicContent();
     
-    // Initialize animations on page load
-    window.addEventListener('load', () => {
-        document.body.classList.add('loaded');
-        
-        // Animate hero content
-        const heroTitle = document.querySelector('.hero-title');
-        const heroSubtitle = document.querySelector('.hero-subtitle');
-        const ctaButton = document.querySelector('.cta-button');
-        
-        setTimeout(() => {
-            if (heroTitle) {
-                heroTitle.style.opacity = '1';
-                heroTitle.style.transform = 'translateY(0)';
-            }
-        }, 200);
-        
-        setTimeout(() => {
-            if (heroSubtitle) {
-                heroSubtitle.style.opacity = '1';
-                heroSubtitle.style.transform = 'translateY(0)';
-            }
-        }, 400);
-        
-        setTimeout(() => {
-            if (ctaButton) {
-                ctaButton.style.opacity = '1';
-                ctaButton.style.transform = 'translateY(0)';
-            }
-        }, 600);
-    });
-
     // Set initial styles for hero animations
     const heroTitle = document.querySelector('.hero-title');
     const heroSubtitle = document.querySelector('.hero-subtitle');
@@ -314,6 +283,33 @@ document.addEventListener('DOMContentLoaded', function() {
         ctaButton.style.transform = 'translateY(30px)';
         ctaButton.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
     }
+
+    // Initialize animations on page load
+    window.addEventListener('load', () => {
+        document.body.classList.add('loaded');
+        
+        // Animate hero content
+        setTimeout(() => {
+            if (heroTitle) {
+                heroTitle.style.opacity = '1';
+                heroTitle.style.transform = 'translateY(0)';
+            }
+        }, 200);
+        
+        setTimeout(() => {
+            if (heroSubtitle) {
+                heroSubtitle.style.opacity = '1';
+                heroSubtitle.style.transform = 'translateY(0)';
+            }
+        }, 400);
+        
+        setTimeout(() => {
+            if (ctaButton) {
+                ctaButton.style.opacity = '1';
+                ctaButton.style.transform = 'translateY(0)';
+            }
+        }, 600);
+    });
 });
 
 // Load dynamic content from admin data

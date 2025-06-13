@@ -424,6 +424,10 @@ function openServiceModal(serviceId = null) {
     document.getElementById('saveService').addEventListener('click', () => {
         saveService(serviceId);
     });
+    
+    document.getElementById('closeServiceModal').addEventListener('click', () => {
+        closeModal('serviceModal');
+    });
 }
 
 // Save service
