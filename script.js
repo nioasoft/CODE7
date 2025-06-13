@@ -314,8 +314,35 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Load dynamic content from admin data
 function loadDynamicContent() {
-    const adminData = localStorage.getItem('digitalCraftData');
+    // Try both storage keys
+    let adminData = localStorage.getItem('digitalCraftData');
+    if (!adminData) {
+        adminData = localStorage.getItem('siteData');
+    }
+    
     console.log('Loading dynamic content...', adminData ? 'Data found' : 'No data');
+    console.log('Raw data:', adminData);
+    
+    // If no data exists, try to load default data from admin system
+    if (!adminData) {
+        console.log('No data found, checking if admin panel has initialized data...');
+        // Check if we can get data from admin panel
+        const allLocalStorageKeys = Object.keys(localStorage);
+        console.log('All localStorage keys:', allLocalStorageKeys);
+        
+        // Initialize with basic default data if nothing exists
+        const basicDefaultData = {
+            projects: [],
+            hero: {
+                headline: 'יוצרים עבורך נוכחות דיגיטלית מושלמת',
+                subtitle: 'פתרונות מותאמים אישית לאתרים, אפליקציות ומערכות ניהול עסקיות'
+            }
+        };
+        localStorage.setItem('digitalCraftData', JSON.stringify(basicDefaultData));
+        adminData = JSON.stringify(basicDefaultData);
+        console.log('Initialized with basic default data');
+    }
+    
     if (adminData) {
         try {
             const data = JSON.parse(adminData);

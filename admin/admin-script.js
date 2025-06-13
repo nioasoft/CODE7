@@ -871,6 +871,11 @@ function updateSiteData(key, value) {
     
     // Update the actual website data
     localStorage.setItem('digitalCraftData', JSON.stringify(data));
+    
+    // Debug logging
+    console.log('Updated site data:', key, value);
+    console.log('Full data saved:', data);
+    console.log('localStorage digitalCraftData:', localStorage.getItem('digitalCraftData'));
 }
 
 // Trigger main site update
