@@ -328,25 +328,50 @@ function loadServices() {
                 <p>${service.description}</p>
             </div>
             <div class="service-actions">
-                <button onclick="editService(${service.id})">
+                <button data-action="edit-service" data-id="${service.id}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                     </svg>
                 </button>
-                <button onclick="deleteService(${service.id})">
+                <button data-action="delete-service" data-id="${service.id}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polyline points="3 6 5 6 21 6"></polyline>
                         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                     </svg>
                 </button>
                 <label class="switch">
-                    <input type="checkbox" ${service.active ? 'checked' : ''} onchange="toggleService(${service.id})">
+                    <input type="checkbox" ${service.active ? 'checked' : ''} data-action="toggle-service" data-id="${service.id}">
                     <span class="slider"></span>
                 </label>
             </div>
         </div>
     `).join('');
+    
+    // Add event listeners to service action buttons
+    setTimeout(() => {
+        document.querySelectorAll('.service-actions button').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const action = this.getAttribute('data-action');
+                const serviceId = parseInt(this.getAttribute('data-id'));
+                
+                if (action === 'edit-service') {
+                    editService(serviceId);
+                } else if (action === 'delete-service') {
+                    deleteService(serviceId);
+                }
+            });
+        });
+        
+        // Add event listeners to service toggle switches
+        document.querySelectorAll('.service-actions input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const serviceId = parseInt(this.getAttribute('data-id'));
+                toggleService(serviceId);
+            });
+        });
+    }, 100);
     
     // Initialize drag and drop
     initializeSortable(servicesList);
@@ -516,12 +541,29 @@ function loadProjects() {
                 <h4>${project.name}</h4>
                 <p>${project.description}</p>
                 <div class="project-actions">
-                    <button class="btn btn-secondary" onclick="editProject(${project.id})">ערוך</button>
-                    <button class="btn btn-danger" onclick="deleteProject(${project.id})">מחק</button>
+                    <button class="btn btn-secondary" data-action="edit" data-id="${project.id}">ערוך</button>
+                    <button class="btn btn-danger" data-action="delete" data-id="${project.id}">מחק</button>
                 </div>
             </div>
         </div>
     `).join('');
+    
+    // Add event listeners to project action buttons
+    setTimeout(() => {
+        document.querySelectorAll('.project-actions button').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const action = this.getAttribute('data-action');
+                const projectId = parseInt(this.getAttribute('data-id'));
+                
+                if (action === 'edit') {
+                    editProject(projectId);
+                } else if (action === 'delete') {
+                    deleteProject(projectId);
+                }
+            });
+        });
+    }, 100);
 }
 
 // Project Modal Functions
@@ -559,9 +601,8 @@ function openProjectModal(projectId = null) {
     
     modal.classList.add('show');
     
-    document.getElementById('saveProject').onclick = () => {
-        saveProject(projectId);
-    };
+    // Store project ID in modal for save button
+    modal.dataset.projectId = projectId || '';
 }
 
 function createProjectModal() {
@@ -611,13 +652,28 @@ function createProjectModal() {
                 </form>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeModal('projectModal')">ביטול</button>
-                <button class="btn btn-primary" id="saveProject">שמור</button>
+                <button class="btn btn-secondary" data-action="close-modal">ביטול</button>
+                <button class="btn btn-primary" data-action="save-project">שמור</button>
             </div>
         </div>
     `;
     
     document.body.appendChild(modal);
+    
+    // Add event listeners for modal buttons
+    modal.querySelector('[data-action="close-modal"]').addEventListener('click', () => {
+        closeModal('projectModal');
+    });
+    
+    modal.querySelector('[data-action="save-project"]').addEventListener('click', () => {
+        const currentProjectId = modal.dataset.projectId || null;
+        saveProject(currentProjectId);
+    });
+    
+    // Close modal when clicking the X button
+    modal.querySelector('.modal-close').addEventListener('click', () => {
+        closeModal('projectModal');
+    });
     
     // Add image preview functionality
     document.getElementById('projectImage').addEventListener('change', function(e) {
@@ -978,3 +1034,5 @@ window.toggleService = toggleService;
 window.editProject = editProject;
 window.deleteProject = deleteProject;
 window.closeModal = closeModal;
+window.openProjectModal = openProjectModal;
+window.saveProject = saveProject;

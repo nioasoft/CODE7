@@ -285,13 +285,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const heroSubtitle = document.querySelector('.hero-subtitle');
     const ctaButton = document.querySelector('.cta-button');
     
-    heroTitle.style.opacity = '0';
-    heroTitle.style.transform = 'translateY(30px)';
-    heroTitle.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+    if (heroTitle) {
+        heroTitle.style.opacity = '0';
+        heroTitle.style.transform = 'translateY(30px)';
+        heroTitle.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+    }
     
-    heroSubtitle.style.opacity = '0';
-    heroSubtitle.style.transform = 'translateY(30px)';
-    heroSubtitle.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+    if (heroSubtitle) {
+        heroSubtitle.style.opacity = '0';
+        heroSubtitle.style.transform = 'translateY(30px)';
+        heroSubtitle.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+    }
     
     if (ctaButton) {
         ctaButton.style.opacity = '0';
