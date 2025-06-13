@@ -250,6 +250,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // Load dynamic content from admin data
+    loadDynamicContent();
+    
     // Initialize animations on page load
     window.addEventListener('load', () => {
         document.body.classList.add('loaded');
@@ -270,8 +273,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 400);
         
         setTimeout(() => {
-            ctaButton.style.opacity = '1';
-            ctaButton.style.transform = 'translateY(0)';
+            if (ctaButton) {
+                ctaButton.style.opacity = '1';
+                ctaButton.style.transform = 'translateY(0)';
+            }
         }, 600);
     });
 
@@ -288,7 +293,100 @@ document.addEventListener('DOMContentLoaded', function() {
     heroSubtitle.style.transform = 'translateY(30px)';
     heroSubtitle.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
     
-    ctaButton.style.opacity = '0';
-    ctaButton.style.transform = 'translateY(30px)';
-    ctaButton.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+    if (ctaButton) {
+        ctaButton.style.opacity = '0';
+        ctaButton.style.transform = 'translateY(30px)';
+        ctaButton.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+    }
 });
+
+// Load dynamic content from admin data
+function loadDynamicContent() {
+    const adminData = localStorage.getItem('digitalCraftData');
+    if (adminData) {
+        try {
+            const data = JSON.parse(adminData);
+            
+            // Update hero section
+            if (data.hero) {
+                const heroTitle = document.querySelector('.hero-title');
+                const heroSubtitle = document.querySelector('.hero-subtitle');
+                
+                if (heroTitle && data.hero.headline) {
+                    heroTitle.textContent = data.hero.headline;
+                }
+                if (heroSubtitle && data.hero.subtitle) {
+                    heroSubtitle.textContent = data.hero.subtitle;
+                }
+            }
+            
+            // Update projects with images
+            if (data.projects) {
+                const projectCards = document.querySelectorAll('.project-card');
+                data.projects.forEach((project, index) => {
+                    if (projectCards[index] && project.image) {
+                        const projectImage = projectCards[index].querySelector('.project-image');
+                        const projectName = projectCards[index].querySelector('h3');
+                        const projectDesc = projectCards[index].querySelector('p');
+                        
+                        if (projectImage) {
+                            projectImage.innerHTML = `<img src="${project.image}" alt="${project.name}" style="width: 100%; height: 100%; object-fit: cover;">`;
+                        }
+                        if (projectName) {
+                            projectName.textContent = project.name;
+                        }
+                        if (projectDesc) {
+                            projectDesc.textContent = project.description;
+                        }
+                    }
+                });
+            }
+            
+        } catch (error) {
+            console.log('Error loading admin data:', error);
+        }
+    }
+}
+
+// Function to update from admin panel
+function updateFromAdmin(data) {
+    if (data.hero) {
+        const heroTitle = document.querySelector('.hero-title');
+        const heroSubtitle = document.querySelector('.hero-subtitle');
+        
+        if (heroTitle && data.hero.headline) {
+            heroTitle.textContent = data.hero.headline;
+        }
+        if (heroSubtitle && data.hero.subtitle) {
+            heroSubtitle.textContent = data.hero.subtitle;
+        }
+    }
+    
+    // Update projects
+    if (data.projects) {
+        const projectCards = document.querySelectorAll('.project-card');
+        data.projects.forEach((project, index) => {
+            if (projectCards[index]) {
+                const projectName = projectCards[index].querySelector('h3');
+                const projectDesc = projectCards[index].querySelector('p');
+                const projectImage = projectCards[index].querySelector('.project-image');
+                
+                if (projectName) projectName.textContent = project.name;
+                if (projectDesc) projectDesc.textContent = project.description;
+                if (projectImage && project.image) {
+                    projectImage.innerHTML = `<img src="${project.image}" alt="${project.name}" style="width: 100%; height: 100%; object-fit: cover;">`;
+                }
+            }
+        });
+    }
+}
+
+// Listen for storage changes
+window.addEventListener('storage', function(e) {
+    if (e.key === 'digitalCraftData') {
+        loadDynamicContent();
+    }
+});
+
+// Make updateFromAdmin available globally for iframe communication
+window.updateFromAdmin = updateFromAdmin;

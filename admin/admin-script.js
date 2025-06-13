@@ -510,7 +510,7 @@ function loadProjects() {
     projectsGrid.innerHTML = projects.map(project => `
         <div class="project-item" data-id="${project.id}">
             <div class="project-image">
-                ${project.image ? `<img src="${project.image}" alt="${project.name}">` : 'תמונה'}
+                ${project.image ? `<img src="${project.image}" alt="${project.name}" style="width: 100%; height: 200px; object-fit: cover;">` : '<div style="display: flex; align-items: center; justify-content: center; height: 200px; background: var(--admin-light-gray); color: var(--admin-text-secondary);">תמונה</div>'}
             </div>
             <div class="project-details">
                 <h4>${project.name}</h4>
@@ -524,7 +524,242 @@ function loadProjects() {
     `).join('');
 }
 
-// Similar implementations for other managers...
+// Project Modal Functions
+function openProjectModal(projectId = null) {
+    // Create project modal if it doesn't exist
+    if (!document.getElementById('projectModal')) {
+        createProjectModal();
+    }
+    
+    const modal = document.getElementById('projectModal');
+    const form = document.getElementById('projectForm');
+    
+    if (projectId) {
+        const projects = getSiteData().projects || [];
+        const project = projects.find(p => p.id === projectId);
+        if (project) {
+            document.getElementById('projectName').value = project.name;
+            document.getElementById('projectDescription').value = project.description;
+            document.getElementById('projectType').value = project.type || 'website';
+            document.getElementById('projectUrl').value = project.url || '';
+            document.getElementById('projectFeatured').checked = project.featured || false;
+            
+            // Show current image if exists
+            const imagePreview = document.getElementById('projectImagePreview');
+            if (project.image) {
+                imagePreview.innerHTML = `<img src="${project.image}" style="max-width: 200px; max-height: 150px; object-fit: cover; border-radius: 8px;">`;
+            } else {
+                imagePreview.innerHTML = '';
+            }
+        }
+    } else {
+        form.reset();
+        document.getElementById('projectImagePreview').innerHTML = '';
+    }
+    
+    modal.classList.add('show');
+    
+    document.getElementById('saveProject').onclick = () => {
+        saveProject(projectId);
+    };
+}
+
+function createProjectModal() {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.id = 'projectModal';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>הוסף/ערוך פרויקט</h3>
+                <button class="modal-close" onclick="closeModal('projectModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="projectForm">
+                    <div class="form-group">
+                        <label for="projectName">שם הפרויקט</label>
+                        <input type="text" id="projectName" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="projectDescription">תיאור</label>
+                        <textarea id="projectDescription" class="form-control" rows="3" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="projectType">סוג הפרויקט</label>
+                        <select id="projectType" class="form-control" required>
+                            <option value="website">אתר תדמית</option>
+                            <option value="ecommerce">חנות מקוונת</option>
+                            <option value="app">אפליקציה</option>
+                            <option value="system">מערכת ניהול</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="projectUrl">קישור לפרויקט (אופציונלי)</label>
+                        <input type="url" id="projectUrl" class="form-control" placeholder="https://example.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="projectImage">תמונה</label>
+                        <input type="file" id="projectImage" class="form-control" accept="image/*">
+                        <div id="projectImagePreview" style="margin-top: 10px;"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="projectFeatured">
+                            פרויקט מומלץ (יוצג בבולט)
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('projectModal')">ביטול</button>
+                <button class="btn btn-primary" id="saveProject">שמור</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Add image preview functionality
+    document.getElementById('projectImage').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                showNotification('נא לבחור קובץ תמונה תקין', 'error');
+                return;
+            }
+            
+            // Validate file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                showNotification('גודל התמונה לא יכול לעלות על 5MB', 'error');
+                return;
+            }
+            
+            // Resize and preview image
+            resizeImage(file, 600, 400, (resizedDataUrl) => {
+                const preview = document.getElementById('projectImagePreview');
+                preview.innerHTML = `<img src="${resizedDataUrl}" style="max-width: 200px; max-height: 150px; object-fit: cover; border-radius: 8px;">`;
+                
+                // Store resized image data
+                preview.dataset.imageData = resizedDataUrl;
+            });
+        }
+    });
+}
+
+// Image resize function
+function resizeImage(file, maxWidth, maxHeight, callback) {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    
+    img.onload = function() {
+        // Calculate new dimensions maintaining aspect ratio
+        let { width, height } = img;
+        
+        if (width > height) {
+            if (width > maxWidth) {
+                height = (height * maxWidth) / width;
+                width = maxWidth;
+            }
+        } else {
+            if (height > maxHeight) {
+                width = (width * maxHeight) / height;
+                height = maxHeight;
+            }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        // Draw and compress image
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Convert to data URL with compression
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        callback(dataUrl);
+    };
+    
+    img.src = URL.createObjectURL(file);
+}
+
+// Save project
+function saveProject(projectId) {
+    const name = document.getElementById('projectName').value;
+    const description = document.getElementById('projectDescription').value;
+    const type = document.getElementById('projectType').value;
+    const url = document.getElementById('projectUrl').value;
+    const featured = document.getElementById('projectFeatured').checked;
+    
+    if (!name || !description) {
+        showNotification('נא למלא את כל השדות הנדרשים', 'error');
+        return;
+    }
+    
+    const projects = getSiteData().projects || [];
+    const preview = document.getElementById('projectImagePreview');
+    const imageData = preview.dataset.imageData || null;
+    
+    if (projectId) {
+        // Edit existing
+        const index = projects.findIndex(p => p.id === projectId);
+        if (index !== -1) {
+            projects[index] = { 
+                ...projects[index], 
+                name, 
+                description, 
+                type, 
+                url, 
+                featured,
+                image: imageData || projects[index].image
+            };
+        }
+    } else {
+        // Add new
+        projects.push({
+            id: Date.now(),
+            name,
+            description,
+            type,
+            url,
+            featured,
+            image: imageData,
+            active: true,
+            order: projects.length
+        });
+    }
+    
+    updateSiteData('projects', projects);
+    loadProjects();
+    closeModal('projectModal');
+    showNotification('הפרויקט נשמר בהצלחה', 'success');
+    
+    // Update preview if open
+    if (window.websitePreview && window.websitePreview.isPreviewOpen) {
+        window.websitePreview.updatePreview();
+    }
+}
+
+// Edit project
+function editProject(projectId) {
+    openProjectModal(projectId);
+}
+
+// Delete project
+function deleteProject(projectId) {
+    if (confirm('האם אתה בטוח שברצונך למחוק פרויקט זה?')) {
+        const projects = getSiteData().projects || [];
+        const filtered = projects.filter(p => p.id !== projectId);
+        updateSiteData('projects', filtered);
+        loadProjects();
+        showNotification('הפרויקט נמחק בהצלחה', 'success');
+        
+        // Update preview if open
+        if (window.websitePreview && window.websitePreview.isPreviewOpen) {
+            window.websitePreview.updatePreview();
+        }
+    }
+}
 
 // Notification system
 function initializeNotifications() {
