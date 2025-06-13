@@ -32,6 +32,46 @@ app.use(compression());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Try to load optional dependencies for file uploads
+let multer, sharp;
+try {
+    multer = require('multer');
+    sharp = require('sharp');
+} catch (error) {
+    console.log('Image upload dependencies not available. File upload will be disabled.');
+}
+
+const fs = require('fs').promises;
+const path = require('path');
+
+// Ensure uploads directory exists and configure multer only if available
+let uploadsDir, upload;
+if (multer && sharp) {
+    uploadsDir = path.join(__dirname, 'uploads');
+    fs.mkdir(uploadsDir, { recursive: true }).catch(console.error);
+
+    // Configure multer for memory storage
+    upload = multer({ 
+        storage: multer.memoryStorage(),
+        limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+        fileFilter: (req, file, cb) => {
+            if (file.mimetype.startsWith('image/')) {
+                cb(null, true);
+            } else {
+                cb(new Error('Only image files are allowed'), false);
+            }
+        }
+    });
+}
+
+// Serve uploads directory if it exists
+if (uploadsDir) {
+    app.use('/uploads', express.static(uploadsDir, {
+        maxAge: '7d',
+        etag: true
+    }));
+}
+
 // Serve static files
 app.use(express.static(path.join(__dirname), {
     maxAge: '1d',
@@ -59,6 +99,68 @@ app.get('/admin/', (req, res) => {
 
 app.get('/admin/dashboard', (req, res) => {
     res.sendFile(path.join(__dirname, 'admin', 'dashboard.html'));
+});
+
+// API endpoint for image upload
+app.post('/api/upload-image', (req, res, next) => {
+    // Check if upload functionality is available
+    if (!upload || !sharp) {
+        return res.status(503).json({ 
+            success: false, 
+            message: 'העלאת תמונות אינה זמינה כרגע' 
+        });
+    }
+    
+    upload.single('image')(req, res, async (err) => {
+        if (err) {
+            return res.status(400).json({ 
+                success: false, 
+                message: err.message 
+            });
+        }
+        
+        try {
+            if (!req.file) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: 'לא נמצא קובץ תמונה' 
+                });
+            }
+
+            // Generate unique filename
+            const timestamp = Date.now();
+            const filename = `image_${timestamp}.webp`;
+            const filepath = path.join(uploadsDir, filename);
+
+            // Process image with Sharp: resize, optimize, convert to WebP
+            await sharp(req.file.buffer)
+                .resize(600, 400, { 
+                    fit: 'cover',
+                    position: 'center'
+                })
+                .webp({ 
+                    quality: 85,
+                    effort: 6
+                })
+                .toFile(filepath);
+
+            // Return the image URL
+            const imageUrl = `/uploads/${filename}`;
+            
+            res.json({ 
+                success: true, 
+                imageUrl: imageUrl,
+                message: 'התמונה הועלתה בהצלחה'
+            });
+
+        } catch (error) {
+            console.error('Image upload error:', error);
+            res.status(500).json({ 
+                success: false, 
+                message: 'שגיאה בהעלאת התמונה'
+            });
+        }
+    });
 });
 
 // API endpoints for contact form (basic implementation)

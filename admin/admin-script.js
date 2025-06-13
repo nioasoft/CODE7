@@ -716,19 +716,46 @@ function createProjectModal() {
                 return;
             }
             
-            // Resize and preview image
-            resizeImage(file, 600, 400, (resizedDataUrl) => {
+            // Upload image to server
+            uploadImageToServer(file, (imageUrl) => {
                 const preview = document.getElementById('projectImagePreview');
-                preview.innerHTML = `<img src="${resizedDataUrl}" style="max-width: 200px; max-height: 150px; object-fit: cover; border-radius: 8px;">`;
+                preview.innerHTML = `<img src="${imageUrl}" style="max-width: 200px; max-height: 150px; object-fit: cover; border-radius: 8px;">`;
                 
-                // Store resized image data
-                preview.dataset.imageData = resizedDataUrl;
+                // Store image URL
+                preview.dataset.imageData = imageUrl;
+                showNotification('התמונה הועלתה בהצלחה', 'success');
             });
         }
     });
 }
 
-// Image resize function
+// Upload image to server function
+function uploadImageToServer(file, callback) {
+    const formData = new FormData();
+    formData.append('image', file);
+    
+    // Show loading notification
+    showNotification('מעלה תמונה...', 'info');
+    
+    fetch('/api/upload-image', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            callback(data.imageUrl);
+        } else {
+            showNotification(data.message || 'שגיאה בהעלאת התמונה', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Upload error:', error);
+        showNotification('שגיאה בהעלאת התמונה', 'error');
+    });
+}
+
+// Image resize function (kept for fallback)
 function resizeImage(file, maxWidth, maxHeight, callback) {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
