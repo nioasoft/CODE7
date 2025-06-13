@@ -263,13 +263,17 @@ document.addEventListener('DOMContentLoaded', function() {
         const ctaButton = document.querySelector('.cta-button');
         
         setTimeout(() => {
-            heroTitle.style.opacity = '1';
-            heroTitle.style.transform = 'translateY(0)';
+            if (heroTitle) {
+                heroTitle.style.opacity = '1';
+                heroTitle.style.transform = 'translateY(0)';
+            }
         }, 200);
         
         setTimeout(() => {
-            heroSubtitle.style.opacity = '1';
-            heroSubtitle.style.transform = 'translateY(0)';
+            if (heroSubtitle) {
+                heroSubtitle.style.opacity = '1';
+                heroSubtitle.style.transform = 'translateY(0)';
+            }
         }, 400);
         
         setTimeout(() => {

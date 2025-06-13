@@ -292,6 +292,31 @@ function initializeHeroEditor() {
     });
 }
 
+// Service management functions (defined first)
+function editService(serviceId) {
+    openServiceModal(serviceId);
+}
+
+function deleteService(serviceId) {
+    if (confirm('האם אתה בטוח שברצונך למחוק שירות זה?')) {
+        const services = getSiteData().services || [];
+        const filtered = services.filter(s => s.id !== serviceId);
+        updateSiteData('services', filtered);
+        loadServices();
+        showNotification('השירות נמחק בהצלחה', 'success');
+    }
+}
+
+function toggleService(serviceId) {
+    const services = getSiteData().services || [];
+    const service = services.find(s => s.id === serviceId);
+    if (service) {
+        service.active = !service.active;
+        updateSiteData('services', services);
+        showNotification(`השירות ${service.active ? 'הופעל' : 'הושבת'} בהצלחה`, 'success');
+    }
+}
+
 // Services Manager
 function initializeServicesManager() {
     const addService = document.getElementById('addService');
@@ -437,32 +462,6 @@ function saveService(serviceId) {
     showNotification('השירות נשמר בהצלחה', 'success');
 }
 
-// Delete service
-function deleteService(serviceId) {
-    if (confirm('האם אתה בטוח שברצונך למחוק שירות זה?')) {
-        const services = getSiteData().services || [];
-        const filtered = services.filter(s => s.id !== serviceId);
-        updateSiteData('services', filtered);
-        loadServices();
-        showNotification('השירות נמחק בהצלחה', 'success');
-    }
-}
-
-// Toggle service
-function toggleService(serviceId) {
-    const services = getSiteData().services || [];
-    const service = services.find(s => s.id === serviceId);
-    if (service) {
-        service.active = !service.active;
-        updateSiteData('services', services);
-        showNotification(`השירות ${service.active ? 'הופעל' : 'הושבת'} בהצלחה`, 'success');
-    }
-}
-
-// Edit service
-function editService(serviceId) {
-    openServiceModal(serviceId);
-}
 
 // Close modal
 function closeModal(modalId) {
@@ -512,6 +511,26 @@ function getDragAfterElement(container, y) {
             return closest;
         }
     }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
+
+// Project management functions (defined first)
+function editProject(projectId) {
+    openProjectModal(projectId);
+}
+
+function deleteProject(projectId) {
+    if (confirm('האם אתה בטוח שברצונך למחוק פרויקט זה?')) {
+        const projects = getSiteData().projects || [];
+        const filtered = projects.filter(p => p.id !== projectId);
+        updateSiteData('projects', filtered);
+        loadProjects();
+        showNotification('הפרויקט נמחק בהצלחה', 'success');
+        
+        // Update preview if open
+        if (window.websitePreview && window.websitePreview.isPreviewOpen) {
+            window.websitePreview.updatePreview();
+        }
+    }
 }
 
 // Projects Manager
@@ -796,26 +815,6 @@ function saveProject(projectId) {
     }
 }
 
-// Edit project
-function editProject(projectId) {
-    openProjectModal(projectId);
-}
-
-// Delete project
-function deleteProject(projectId) {
-    if (confirm('האם אתה בטוח שברצונך למחוק פרויקט זה?')) {
-        const projects = getSiteData().projects || [];
-        const filtered = projects.filter(p => p.id !== projectId);
-        updateSiteData('projects', filtered);
-        loadProjects();
-        showNotification('הפרויקט נמחק בהצלחה', 'success');
-        
-        // Update preview if open
-        if (window.websitePreview && window.websitePreview.isPreviewOpen) {
-            window.websitePreview.updatePreview();
-        }
-    }
-}
 
 // Notification system
 function initializeNotifications() {
