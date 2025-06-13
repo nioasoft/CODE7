@@ -266,8 +266,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const heroSubtitle = document.querySelector('.hero-subtitle');
     const ctaButton = document.querySelector('.cta-button');
     
-    console.log('Hero elements found:', { heroTitle, heroSubtitle, ctaButton });
-    
     if (heroTitle) {
         heroTitle.style.opacity = '0';
         heroTitle.style.transform = 'translateY(30px)';
