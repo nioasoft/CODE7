@@ -1,0 +1,13 @@
+RewriteEngine On
+
+# Route API calls to Node.js app
+RewriteRule ^api/(.*)$ http://localhost:3000/api/$1 [P,L]
+
+# Route admin to Node.js app
+RewriteRule ^admin(.*)$ http://localhost:3000/admin$1 [P,L]
+
+# Route everything else to Node.js app except static files
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} !^/uploads/
+RewriteRule ^(.*)$ http://localhost:3000/$1 [P,L]

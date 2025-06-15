@@ -896,7 +896,7 @@ function showNotification(message, type = 'success') {
 // Data management
 async function getSiteData() {
     try {
-        const response = await fetch('/api/site-data');
+        const response = await fetch('/data/siteData.json');
         if (response.ok) {
             const data = await response.json();
             return data;
