@@ -790,15 +790,8 @@ function uploadImageToServer(file, callback) {
     formData.append('upload_preset', uploadPreset);
     formData.append('folder', 'code7/projects'); // Optional: organize in folders
     
-    // Image transformations
-    formData.append('transformation', JSON.stringify({
-        width: 600,
-        height: 400,
-        crop: 'fill',
-        gravity: 'center',
-        quality: 'auto:best',
-        format: 'webp'
-    }));
+    // Image transformations - Cloudinary URL format
+    formData.append('transformation', 'w_600,h_400,c_fill,g_center,q_auto:best,f_webp');
     
     // Show loading notification
     showNotification('מעלה תמונה ל-Cloudinary...', 'info');
@@ -1310,12 +1303,7 @@ function uploadLogoImage(file) {
     formData.append('folder', 'code7/logos');
     
     // Logo transformations (maintain aspect ratio, max height for header)
-    formData.append('transformation', JSON.stringify({
-        height: 80,
-        crop: 'scale',
-        quality: 'auto:best',
-        format: 'auto'
-    }));
+    formData.append('transformation', 'h_80,c_scale,q_auto:best,f_auto');
     
     showNotification('מעלה לוגו ל-Cloudinary...', 'info');
     
