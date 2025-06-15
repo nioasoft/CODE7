@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Digital Craft - לוח בקרה</title>
+    <title>CODE7 - לוח בקרה</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚙️</text></svg>">
     <link rel="stylesheet" href="admin-styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,7 +21,7 @@
                     <line x1="3" y1="18" x2="21" y2="18"></line>
                 </svg>
             </button>
-            <h1 class="admin-logo">Digital Craft</h1>
+            <h1 class="admin-logo">CODE7</h1>
         </div>
         
         <div class="header-right">
@@ -750,7 +750,7 @@
                     <h3>פרטי עסק</h3>
                     <div class="form-group">
                         <label for="businessName">שם העסק</label>
-                        <input type="text" id="businessName" class="form-control" value="Digital Craft">
+                        <input type="text" id="businessName" class="form-control" value="CODE7">
                     </div>
                     <div class="form-group">
                         <label for="businessPhone">טלפון</label>
@@ -760,6 +760,49 @@
                         <label for="businessEmail">אימייל</label>
                         <input type="email" id="businessEmail" class="form-control" value="benatia.asaf@gmail.com">
                     </div>
+                </div>
+                
+                <div class="settings-group">
+                    <h3>לוגו האתר</h3>
+                    <div class="form-group">
+                        <label for="logoUpload">העלאת לוגו</label>
+                        <input type="file" id="logoUpload" class="form-control" accept="image/*">
+                        <small class="form-text">מומלץ: רזולוציה גבוהה, רקע שקוף (PNG), עד 2MB</small>
+                    </div>
+                    <div class="form-group">
+                        <label>תצוגה מקדימה</label>
+                        <div id="logoPreview" class="logo-preview">
+                            <div style="padding: 20px; background: var(--admin-light-gray); border-radius: 8px; text-align: center; color: var(--admin-text-secondary);">אין לוגו</div>
+                        </div>
+                        <button type="button" id="removeLogo" class="btn btn-danger btn-sm" style="display: none; margin-top: 10px;">הסר לוגו</button>
+                    </div>
+                </div>
+                
+                <div class="settings-group">
+                    <h3>רשתות חברתיות</h3>
+                    <div class="form-group">
+                        <label for="facebookUrl">Facebook</label>
+                        <input type="url" id="facebookUrl" class="form-control" placeholder="https://facebook.com/your-page">
+                    </div>
+                    <div class="form-group">
+                        <label for="instagramUrl">Instagram</label>
+                        <input type="url" id="instagramUrl" class="form-control" placeholder="https://instagram.com/your-account">
+                    </div>
+                    <div class="form-group">
+                        <label for="linkedinUrl">LinkedIn</label>
+                        <input type="url" id="linkedinUrl" class="form-control" placeholder="https://linkedin.com/company/your-company">
+                    </div>
+                </div>
+                
+                <div class="settings-actions">
+                    <button type="button" id="saveSettings" class="btn btn-primary">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                            <polyline points="7 3 7 8 15 8"></polyline>
+                        </svg>
+                        שמור הגדרות
+                    </button>
                 </div>
                 
                 <div class="settings-group">

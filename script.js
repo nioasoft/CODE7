@@ -359,6 +359,11 @@ function updatePageContent(data) {
         }
     }
     
+    // Update logo
+    if (data.settings) {
+        updateSiteLogo(data.settings.logo);
+    }
+    
     // Update projects with images
     if (data.projects) {
         console.log('Updating projects:', data.projects);
@@ -434,8 +439,28 @@ window.addEventListener('message', function(e) {
     if (e.data && e.data.type === 'dataUpdate') {
         console.log('Received data update from admin panel');
         loadDynamicContent();
+    } else if (e.data && e.data.type === 'logoUpdate') {
+        console.log('Received logo update from admin panel');
+        updateSiteLogo(e.data.logoUrl);
     }
 });
+
+// Function to update site logo
+function updateSiteLogo(logoUrl) {
+    const siteLogo = document.getElementById('siteLogo');
+    const siteTitle = document.getElementById('siteTitle');
+    
+    if (siteLogo && siteTitle) {
+        if (logoUrl) {
+            siteLogo.src = logoUrl;
+            siteLogo.style.display = 'block';
+            siteTitle.style.display = 'none';
+        } else {
+            siteLogo.style.display = 'none';
+            siteTitle.style.display = 'block';
+        }
+    }
+}
 
 // Make updateFromAdmin available globally for iframe communication
 window.updateFromAdmin = updateFromAdmin;

@@ -1049,14 +1049,15 @@ function getDefaultSiteData() {
             }
         },
         seo: {
-            title: 'Digital Craft - יוצרים עבורך נוכחות דיגיטלית מושלמת',
-            description: 'Digital Craft - פתרונות מותאמים אישית לאתרים, אפליקציות ומערכות ניהול עסקיות.',
+            title: 'CODE7 - יוצרים עבורך נוכחות דיגיטלית מושלמת',
+            description: 'CODE7 - פתרונות מותאמים אישית לאתרים, אפליקציות ומערכות ניהול עסקיות.',
             keywords: ''
         },
         settings: {
-            businessName: 'Digital Craft',
+            businessName: 'CODE7',
             phone: '055-2882839',
             email: 'benatia.asaf@gmail.com',
+            logo: '',
             social: {
                 facebook: '',
                 instagram: '',
@@ -1124,7 +1125,153 @@ function initializeSEOSettings() {
 }
 
 function initializeGeneralSettings() {
-    // Implementation for general settings
+    // Load settings data
+    loadSettingsData();
+    
+    // Initialize logo upload
+    initializeLogoUpload();
+    
+    // Save settings button
+    const saveSettings = document.getElementById('saveSettings');
+    saveSettings?.addEventListener('click', () => {
+        saveSettingsData();
+    });
+}
+
+async function loadSettingsData() {
+    const data = await getSiteData();
+    const settings = data.settings || {};
+    
+    // Update form fields if they exist
+    const businessName = document.getElementById('businessName');
+    const phone = document.getElementById('businessPhone');
+    const email = document.getElementById('businessEmail');
+    const facebook = document.getElementById('facebookUrl');
+    const instagram = document.getElementById('instagramUrl');
+    const linkedin = document.getElementById('linkedinUrl');
+    
+    if (businessName) businessName.value = settings.businessName || 'CODE7';
+    if (phone) phone.value = settings.phone || '';
+    if (email) email.value = settings.email || '';
+    if (facebook) facebook.value = settings.social?.facebook || '';
+    if (instagram) instagram.value = settings.social?.instagram || '';
+    if (linkedin) linkedin.value = settings.social?.linkedin || '';
+    
+    // Update logo display
+    updateLogoDisplay(settings.logo);
+}
+
+function initializeLogoUpload() {
+    const logoUpload = document.getElementById('logoUpload');
+    const removeLogo = document.getElementById('removeLogo');
+    
+    logoUpload?.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            uploadLogoImage(file);
+        }
+    });
+    
+    removeLogo?.addEventListener('click', () => {
+        removeLogoImage();
+    });
+}
+
+function uploadLogoImage(file) {
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+        showNotification('נא לבחור קובץ תמונה תקין', 'error');
+        return;
+    }
+    
+    // Validate file size (max 2MB for logo)
+    if (file.size > 2 * 1024 * 1024) {
+        showNotification('גודל הלוגו לא יכול לעלות על 2MB', 'error');
+        return;
+    }
+    
+    // Upload logo to server
+    uploadImageToServer(file, async (imageUrl) => {
+        // Update settings with logo URL
+        const data = await getSiteData();
+        data.settings = data.settings || {};
+        data.settings.logo = imageUrl;
+        
+        await updateSiteData('settings', data.settings);
+        updateLogoDisplay(imageUrl);
+        updateMainSiteLogo(imageUrl);
+        showNotification('הלוגו עודכן בהצלחה', 'success');
+    });
+}
+
+async function removeLogoImage() {
+    const data = await getSiteData();
+    data.settings = data.settings || {};
+    data.settings.logo = '';
+    
+    await updateSiteData('settings', data.settings);
+    updateLogoDisplay('');
+    updateMainSiteLogo('');
+    showNotification('הלוגו הוסר בהצלחה', 'success');
+}
+
+function updateLogoDisplay(logoUrl) {
+    const logoPreview = document.getElementById('logoPreview');
+    const removeLogo = document.getElementById('removeLogo');
+    
+    if (logoPreview) {
+        if (logoUrl) {
+            logoPreview.innerHTML = `<img src="${logoUrl}" style="max-width: 200px; max-height: 80px; object-fit: contain; border-radius: 8px;">`;
+            if (removeLogo) removeLogo.style.display = 'inline-block';
+        } else {
+            logoPreview.innerHTML = '<div style="padding: 20px; background: var(--admin-light-gray); border-radius: 8px; text-align: center; color: var(--admin-text-secondary);">אין לוגו</div>';
+            if (removeLogo) removeLogo.style.display = 'none';
+        }
+    }
+}
+
+function updateMainSiteLogo(logoUrl) {
+    // Update the main site logo in real time if possible
+    try {
+        if (window.opener && !window.opener.closed) {
+            window.opener.postMessage({
+                type: 'logoUpdate',
+                logoUrl: logoUrl
+            }, '*');
+        }
+    } catch (e) {
+        console.log('Could not communicate with main site:', e);
+    }
+}
+
+async function saveSettingsData() {
+    const businessName = document.getElementById('businessName')?.value || 'CODE7';
+    const phone = document.getElementById('businessPhone')?.value || '';
+    const email = document.getElementById('businessEmail')?.value || '';
+    const facebook = document.getElementById('facebookUrl')?.value || '';
+    const instagram = document.getElementById('instagramUrl')?.value || '';
+    const linkedin = document.getElementById('linkedinUrl')?.value || '';
+    
+    const data = await getSiteData();
+    const settings = {
+        businessName,
+        phone,
+        email,
+        logo: data.settings?.logo || '',
+        social: {
+            facebook,
+            instagram,
+            linkedin
+        }
+    };
+    
+    await updateSiteData('settings', settings);
+    showNotification('ההגדרות נשמרו בהצלחה', 'success');
+    
+    // Update preview if open
+    if (window.websitePreview && window.websitePreview.isPreviewOpen) {
+        window.websitePreview.updatePreview();
+    }
 }
 
 // Export functions for global access
