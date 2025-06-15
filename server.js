@@ -17,7 +17,12 @@ app.use(helmet({
             scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
             scriptSrcAttr: ["'unsafe-inline'"],
             imgSrc: ["'self'", "data:", "https:", "blob:"],
-            connectSrc: ["'self'"]
+            connectSrc: ["'self'"],
+            baseUri: ["'self'"],
+            formAction: ["'self'"],
+            frameAncestors: ["'self'"],
+            objectSrc: ["'none'"],
+            upgradeInsecureRequests: []
         }
     }
 }));
@@ -72,17 +77,44 @@ if (uploadsDir) {
     }));
 }
 
-// Serve static files
+// Serve static files with proper headers
 app.use(express.static(path.join(__dirname), {
     maxAge: '1d',
-    etag: true
+    etag: true,
+    setHeaders: (res, path) => {
+        if (path.endsWith('.css')) {
+            res.setHeader('Content-Type', 'text/css');
+        }
+        if (path.endsWith('.js')) {
+            res.setHeader('Content-Type', 'application/javascript');
+        }
+    }
 }));
 
-// Cache control for static assets
+// Serve admin static files
 app.use('/admin', express.static(path.join(__dirname, 'admin'), {
     maxAge: '1h',
-    etag: true
+    etag: true,
+    setHeaders: (res, path) => {
+        if (path.endsWith('.css')) {
+            res.setHeader('Content-Type', 'text/css');
+        }
+        if (path.endsWith('.js')) {
+            res.setHeader('Content-Type', 'application/javascript');
+        }
+    }
 }));
+
+// Explicit routes for CSS files
+app.get('/styles.css', (req, res) => {
+    res.setHeader('Content-Type', 'text/css');
+    res.sendFile(path.join(__dirname, 'styles.css'));
+});
+
+app.get('/admin/admin-styles.css', (req, res) => {
+    res.setHeader('Content-Type', 'text/css');
+    res.sendFile(path.join(__dirname, 'admin', 'admin-styles.css'));
+});
 
 // Routes
 app.get('/', (req, res) => {
