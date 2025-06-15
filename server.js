@@ -7,24 +7,9 @@ const cors = require('cors');
 const app = express();
 const PORT = process.env.PORT || process.env.NODEJS_PORT || 5000;
 
-// Security middleware
+// Security middleware - CSP disabled temporarily for Cloudinary testing
 app.use(helmet({
-    contentSecurityPolicy: {
-        directives: {
-            defaultSrc: ["'self'"],
-            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-            fontSrc: ["'self'", "https://fonts.gstatic.com"],
-            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-            scriptSrcAttr: ["'unsafe-inline'"],
-            imgSrc: ["'self'", "data:", "https:", "blob:", "https://res.cloudinary.com"],
-            connectSrc: ["'self'", "https://api.cloudinary.com"],
-            baseUri: ["'self'"],
-            formAction: ["'self'"],
-            frameAncestors: ["'self'"],
-            objectSrc: ["'none'"],
-            upgradeInsecureRequests: []
-        }
-    }
+    contentSecurityPolicy: false
 }));
 
 // Enable CORS
