@@ -1,13 +1,14 @@
 // Admin Panel JavaScript
 
 // Project management functions (must be defined early for hoisting)
-function editProject(projectId) {
-    openProjectModal(projectId);
+async function editProject(projectId) {
+    await openProjectModal(projectId);
 }
 
-function deleteProject(projectId) {
+async function deleteProject(projectId) {
     if (confirm('האם אתה בטוח שברצונך למחוק פרויקט זה?')) {
-        const projects = getSiteData().projects || [];
+        const siteData = await getSiteData();
+        const projects = siteData.projects || [];
         const filtered = projects.filter(p => p.id !== projectId);
         updateSiteData('projects', filtered);
         loadProjects();
@@ -25,9 +26,10 @@ function editService(serviceId) {
     openServiceModal(serviceId);
 }
 
-function deleteService(serviceId) {
+async function deleteService(serviceId) {
     if (confirm('האם אתה בטוח שברצונך למחוק שירות זה?')) {
-        const services = getSiteData().services || [];
+        const siteData = await getSiteData();
+        const services = siteData.services || [];
         const filtered = services.filter(s => s.id !== serviceId);
         updateSiteData('services', filtered);
         loadServices();
@@ -35,8 +37,9 @@ function deleteService(serviceId) {
     }
 }
 
-function toggleService(serviceId) {
-    const services = getSiteData().services || [];
+async function toggleService(serviceId) {
+    const siteData = await getSiteData();
+    const services = siteData.services || [];
     const service = services.find(s => s.id === serviceId);
     if (service) {
         service.active = !service.active;
@@ -352,9 +355,10 @@ function initializeServicesManager() {
 }
 
 // Load services
-function loadServices() {
+async function loadServices() {
     const servicesList = document.getElementById('servicesList');
-    const services = getSiteData().services || [];
+    const siteData = await getSiteData();
+    const services = siteData.services || [];
     
     servicesList.innerHTML = services.map((service, index) => `
         <div class="service-item" data-id="${service.id}">
@@ -452,7 +456,7 @@ function openServiceModal(serviceId = null) {
 }
 
 // Save service
-function saveService(serviceId) {
+async function saveService(serviceId) {
     const name = document.getElementById('serviceName').value;
     const description = document.getElementById('serviceDescription').value;
     
@@ -461,7 +465,8 @@ function saveService(serviceId) {
         return;
     }
     
-    const services = getSiteData().services || [];
+    const siteData = await getSiteData();
+    const services = siteData.services || [];
     
     if (serviceId) {
         // Edit existing
@@ -583,7 +588,7 @@ async function loadProjects() {
                 const projectId = parseInt(this.getAttribute('data-id'));
                 
                 if (action === 'edit') {
-                    editProject(projectId);
+                    await editProject(projectId);
                 } else if (action === 'delete') {
                     deleteProject(projectId);
                 }
@@ -593,7 +598,7 @@ async function loadProjects() {
 }
 
 // Project Modal Functions
-function openProjectModal(projectId = null) {
+async function openProjectModal(projectId = null) {
     // Create project modal if it doesn't exist
     if (!document.getElementById('projectModal')) {
         createProjectModal();
@@ -603,7 +608,8 @@ function openProjectModal(projectId = null) {
     const form = document.getElementById('projectForm');
     
     if (projectId) {
-        const projects = getSiteData().projects || [];
+        const siteData = await getSiteData();
+        const projects = siteData.projects || [];
         const project = projects.find(p => p.id === projectId);
         if (project) {
             document.getElementById('projectName').value = project.name;
@@ -805,7 +811,8 @@ async function saveProject(projectId) {
         return;
     }
     
-    const projects = getSiteData().projects || [];
+    const siteData = await getSiteData();
+    const projects = siteData.projects || [];
     const preview = document.getElementById('projectImagePreview');
     const imageData = preview.dataset.imageData || null;
     
