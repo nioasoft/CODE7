@@ -790,9 +790,6 @@ function uploadImageToServer(file, callback) {
     formData.append('upload_preset', uploadPreset);
     formData.append('folder', 'code7/projects'); // Optional: organize in folders
     
-    // Image transformations - Cloudinary URL format
-    formData.append('transformation', 'w_600,h_400,c_fill,g_center,q_auto:best,f_webp');
-    
     // Show loading notification
     showNotification('מעלה תמונה ל-Cloudinary...', 'info');
     
@@ -809,8 +806,10 @@ function uploadImageToServer(file, callback) {
     .then(data => {
         console.log('Cloudinary response data:', data);
         if (data.secure_url) {
-            console.log('Image uploaded successfully:', data.secure_url);
-            callback(data.secure_url);
+            // Create transformed URL for 600x400 WebP
+            const transformedUrl = data.secure_url.replace('/upload/', '/upload/w_600,h_400,c_fill,g_center,q_auto:best,f_webp/');
+            console.log('Image uploaded successfully:', transformedUrl);
+            callback(transformedUrl);
             showNotification('התמונה הועלתה בהצלחה', 'success');
         } else {
             console.error('Upload failed:', data.error);
@@ -1302,9 +1301,6 @@ function uploadLogoImage(file) {
     formData.append('upload_preset', uploadPreset);
     formData.append('folder', 'code7/logos');
     
-    // Logo transformations (maintain aspect ratio, max height for header)
-    formData.append('transformation', 'h_80,c_scale,q_auto:best,f_auto');
-    
     showNotification('מעלה לוגו ל-Cloudinary...', 'info');
     
     fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
@@ -1314,14 +1310,17 @@ function uploadLogoImage(file) {
     .then(response => response.json())
     .then(async (data) => {
         if (data.secure_url) {
+            // Create transformed URL for logo (max height 80px)
+            const transformedUrl = data.secure_url.replace('/upload/', '/upload/h_80,c_scale,q_auto:best,f_auto/');
+            
             // Update settings with logo URL
             const siteData = await getSiteData();
             siteData.settings = siteData.settings || {};
-            siteData.settings.logo = data.secure_url;
+            siteData.settings.logo = transformedUrl;
             
             await updateSiteData('settings', siteData.settings);
-            updateLogoDisplay(data.secure_url);
-            updateMainSiteLogo(data.secure_url);
+            updateLogoDisplay(transformedUrl);
+            updateMainSiteLogo(transformedUrl);
             showNotification('הלוגו עודכן בהצלחה', 'success');
         } else {
             showNotification(data.error?.message || 'שגיאה בהעלאת הלוגו', 'error');
