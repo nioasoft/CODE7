@@ -867,11 +867,34 @@ async function saveProject(projectId) {
     }
     
     console.log('Projects before save:', projects);
-    const saveResult = await updateSiteData('projects', projects);
-    console.log('Save result:', saveResult);
+    
+    // Save the entire site data with updated projects
+    siteData.projects = projects;
+    
+    // Send to server directly
+    try {
+        const response = await fetch('/site-data', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(siteData)
+        });
+        
+        if (response.ok) {
+            console.log('Project saved to server successfully');
+            showNotification('הפרויקט נשמר בהצלחה', 'success');
+        } else {
+            console.error('Failed to save to server:', response.status);
+            showNotification('שגיאה בשמירת הפרויקט', 'error');
+        }
+    } catch (error) {
+        console.error('Error saving project:', error);
+        showNotification('שגיאה בשמירת הפרויקט', 'error');
+    }
+    
     await loadProjects();
     closeModal('projectModal');
-    showNotification('הפרויקט נשמר בהצלחה', 'success');
     
     // Force update main website
     triggerMainSiteUpdate();
