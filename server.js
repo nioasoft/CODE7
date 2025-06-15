@@ -295,8 +295,30 @@ app.post('/site-data', async (req, res) => {
             });
         }
         
-        // Write data to file
-        await fs.writeFile(dataPath, JSON.stringify(updatedData, null, 2));
+        // Log for debugging
+        console.log('Attempting to save data to:', dataPath);
+        console.log('Data size:', JSON.stringify(updatedData).length, 'bytes');
+        
+        // Check if directory exists and is writable
+        try {
+            await fs.access(path.dirname(dataPath), fsSync.constants.W_OK);
+        } catch (accessError) {
+            console.error('Directory not writable:', accessError);
+            // Try to create directory
+            await fs.mkdir(path.dirname(dataPath), { recursive: true });
+        }
+        
+        // Write data to file with explicit encoding and mode
+        await fs.writeFile(dataPath, JSON.stringify(updatedData, null, 2), {
+            encoding: 'utf8',
+            mode: 0o644
+        });
+        
+        // Verify write was successful
+        const savedData = await fs.readFile(dataPath, 'utf8');
+        const parsedData = JSON.parse(savedData);
+        
+        console.log('Data saved successfully');
         
         res.json({ 
             success: true, 
@@ -304,9 +326,48 @@ app.post('/site-data', async (req, res) => {
         });
     } catch (error) {
         console.error('Error saving site data:', error);
+        console.error('Error details:', error.message, error.code);
         res.status(500).json({ 
             success: false, 
-            message: 'שגיאה בשמירת הנתונים' 
+            message: 'שגיאה בשמירת הנתונים: ' + error.message
+        });
+    }
+});
+
+// Alternative update endpoint for specific data
+app.post('/update-project', async (req, res) => {
+    try {
+        const { projectId, projectData } = req.body;
+        
+        if (!projectId || !projectData) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Missing project data' 
+            });
+        }
+        
+        // Read current data
+        const dataPath = path.join(__dirname, 'data', 'siteData.json');
+        const currentData = JSON.parse(await fs.readFile(dataPath, 'utf8'));
+        
+        // Update specific project
+        const projectIndex = currentData.projects.findIndex(p => p.id === projectId);
+        if (projectIndex !== -1) {
+            currentData.projects[projectIndex] = projectData;
+        }
+        
+        // Save back
+        await fs.writeFile(dataPath, JSON.stringify(currentData, null, 2));
+        
+        res.json({ 
+            success: true, 
+            message: 'Project updated successfully' 
+        });
+    } catch (error) {
+        console.error('Error updating project:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: error.message 
         });
     }
 });

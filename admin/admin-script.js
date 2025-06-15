@@ -729,6 +729,9 @@ function createProjectModal() {
             }
             
             // Upload image to server
+            const saveButton = document.querySelector('[data-action="save-project"]');
+            if (saveButton) saveButton.disabled = true;
+            
             uploadImageToServer(file, (imageUrl) => {
                 const preview = document.getElementById('projectImagePreview');
                 preview.innerHTML = `<img src="${imageUrl}" style="max-width: 200px; max-height: 150px; object-fit: cover; border-radius: 8px;">`;
@@ -736,6 +739,9 @@ function createProjectModal() {
                 // Store image URL
                 preview.dataset.imageData = imageUrl;
                 showNotification('התמונה הועלתה בהצלחה', 'success');
+                
+                // Re-enable save button
+                if (saveButton) saveButton.disabled = false;
             });
         }
     });
@@ -951,7 +957,9 @@ async function updateSiteData(key, value) {
                 console.log('Data saved to server successfully');
                 return true;
             } else {
-                throw new Error('Server save failed');
+                const errorData = await response.text();
+                console.error('Server response:', response.status, errorData);
+                throw new Error(`Server save failed: ${response.status}`);
             }
         } catch (serverError) {
             console.log('Server save failed, using localStorage:', serverError);
