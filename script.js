@@ -316,7 +316,7 @@ document.addEventListener('DOMContentLoaded', function() {
 async function loadDynamicContent() {
     try {
         // Fetch data from server
-        const response = await fetch('/data/siteData.json');
+        const response = await fetch('/site-data');
         if (!response.ok) throw new Error('Failed to fetch site data');
         
         const data = await response.json();

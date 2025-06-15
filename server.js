@@ -133,8 +133,8 @@ app.get('/admin/dashboard', (req, res) => {
     res.sendFile(path.join(__dirname, 'admin', 'dashboard.html'));
 });
 
-// API endpoint for image upload
-app.post('/api/upload-image', (req, res, next) => {
+// Image upload endpoint
+app.post('/upload-image', (req, res, next) => {
     // Check if upload functionality is available
     if (!upload || !sharp) {
         return res.status(503).json({ 
@@ -196,8 +196,8 @@ app.post('/api/upload-image', (req, res, next) => {
     });
 });
 
-// API endpoints for contact form (basic implementation)
-app.post('/api/contact', (req, res) => {
+// Contact form endpoint
+app.post('/contact', (req, res) => {
     const { name, email, phone, projectType, budget, timeline, description } = req.body;
     
     // Basic validation
@@ -236,8 +236,8 @@ app.post('/api/contact', (req, res) => {
     });
 });
 
-// API endpoint to get site data
-app.get('/api/site-data', async (req, res) => {
+// Site data endpoint
+app.get('/site-data', async (req, res) => {
     try {
         const dataPath = path.join(__dirname, 'data', 'siteData.json');
         
@@ -281,8 +281,8 @@ app.get('/api/site-data', async (req, res) => {
     }
 });
 
-// API endpoint to update site data
-app.post('/api/site-data', async (req, res) => {
+// Site data update endpoint
+app.post('/site-data', async (req, res) => {
     try {
         const dataPath = path.join(__dirname, 'data', 'siteData.json');
         const updatedData = req.body;

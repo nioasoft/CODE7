@@ -744,9 +744,9 @@ function uploadImageToServer(file, callback) {
     // Show loading notification
     showNotification('מעלה תמונה...', 'info');
     
-    console.log('Uploading image to /api/upload-image...');
+    console.log('Uploading image to /upload-image...');
     
-    fetch('/api/upload-image', {
+    fetch('/upload-image', {
         method: 'POST',
         body: formData
     })
@@ -905,7 +905,7 @@ function showNotification(message, type = 'success') {
 // Data management
 async function getSiteData() {
     try {
-        const response = await fetch('/data/siteData.json');
+        const response = await fetch('/site-data');
         if (response.ok) {
             const data = await response.json();
             return data;
@@ -931,7 +931,7 @@ async function updateSiteData(key, value) {
             localStorage.setItem('digitalCraftData', JSON.stringify(data));
             
             // Try to write to the JSON file directly (this will work if server supports it)
-            const response = await fetch('/api/site-data', {
+            const response = await fetch('/site-data', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
