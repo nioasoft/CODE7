@@ -1,8 +1,1 @@
 RewriteEngine On
-
-# LiteSpeed Node.js configuration
-RewriteCond %{REQUEST_URI} !^/uploads/
-RewriteCond %{REQUEST_URI} !^/data/
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)$ /server.js [H=application/x-httpd-lsnode,L]
