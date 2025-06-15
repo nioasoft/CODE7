@@ -904,23 +904,10 @@ function showNotification(message, type = 'success') {
 
 // Data management
 async function getSiteData() {
-    // Try to get from localStorage first
-    const localData = localStorage.getItem('siteData') || localStorage.getItem('digitalCraftData');
-    if (localData) {
-        try {
-            return JSON.parse(localData);
-        } catch (e) {
-            console.log('Error parsing local data:', e);
-        }
-    }
-    
-    // Try to fetch from server
     try {
-        const response = await fetch('/data/siteData.json');
+        const response = await fetch('/site-data');
         if (response.ok) {
             const data = await response.json();
-            // Store in localStorage for future use
-            localStorage.setItem('siteData', JSON.stringify(data));
             return data;
         }
     } catch (error) {
@@ -928,9 +915,7 @@ async function getSiteData() {
     }
     
     // Fallback to default data
-    const defaultData = getDefaultSiteData();
-    localStorage.setItem('siteData', JSON.stringify(defaultData));
-    return defaultData;
+    return getDefaultSiteData();
 }
 
 async function updateSiteData(key, value) {

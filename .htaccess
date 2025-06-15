@@ -1,13 +1,17 @@
 RewriteEngine On
 
-# Route API calls to Node.js app
-RewriteRule ^api/(.*)$ http://localhost:3000/api/$1 [P,L]
+# Route specific endpoints to Node.js app (replace PORT with actual port)
+RewriteRule ^upload-image$ http://localhost:PORT/upload-image [P,L]
+RewriteRule ^site-data$ http://localhost:PORT/site-data [P,L]
+RewriteRule ^contact$ http://localhost:PORT/contact [P,L]
 
 # Route admin to Node.js app
-RewriteRule ^admin(.*)$ http://localhost:3000/admin$1 [P,L]
+RewriteRule ^admin/(.*)$ http://localhost:PORT/admin/$1 [P,L]
+RewriteRule ^admin$ http://localhost:PORT/admin [P,L]
 
-# Route everything else to Node.js app except static files
+# Route root to Node.js app
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_URI} !^/uploads/
-RewriteRule ^(.*)$ http://localhost:3000/$1 [P,L]
+RewriteCond %{REQUEST_URI} !^/data/
+RewriteRule ^(.*)$ http://localhost:PORT/$1 [P,L]
