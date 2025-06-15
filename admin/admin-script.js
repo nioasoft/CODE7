@@ -640,6 +640,18 @@ async function openProjectModal(projectId = null) {
     
     // Store project ID in modal for save button
     modal.dataset.projectId = projectId || '';
+    
+    // Set save button state based on whether editing or creating new project
+    const saveButton = modal.querySelector('[data-action="save-project"]');
+    if (projectId) {
+        // Editing existing project - enable save button
+        saveButton.disabled = false;
+        saveButton.textContent = 'שמור';
+    } else {
+        // Creating new project - disable until image is uploaded
+        saveButton.disabled = true;
+        saveButton.textContent = 'יש להעלות תמונה תחילה';
+    }
 }
 
 function createProjectModal() {
@@ -707,6 +719,7 @@ function createProjectModal() {
         saveProject(currentProjectId);
     });
     
+    
     // Close modal when clicking the X button
     modal.querySelector('.modal-close').addEventListener('click', () => {
         closeModal('projectModal');
@@ -730,7 +743,10 @@ function createProjectModal() {
             
             // Upload image to server
             const saveButton = document.querySelector('[data-action="save-project"]');
-            if (saveButton) saveButton.disabled = true;
+            if (saveButton) {
+                saveButton.disabled = true;
+                saveButton.textContent = 'מעלה תמונה...';
+            }
             
             uploadImageToServer(file, (imageUrl) => {
                 const preview = document.getElementById('projectImagePreview');
@@ -741,7 +757,10 @@ function createProjectModal() {
                 showNotification('התמונה הועלתה בהצלחה', 'success');
                 
                 // Re-enable save button
-                if (saveButton) saveButton.disabled = false;
+                if (saveButton) {
+                    saveButton.disabled = false;
+                    saveButton.textContent = 'שמור';
+                }
             });
         }
     });
@@ -884,6 +903,10 @@ async function saveProject(projectId) {
         if (response.ok) {
             console.log('Project saved to server successfully');
             showNotification('הפרויקט נשמר בהצלחה', 'success');
+            
+            // Refresh the projects display immediately
+            await loadProjects();
+            closeModal('projectModal');
         } else {
             console.error('Failed to save to server:', response.status);
             showNotification('שגיאה בשמירת הפרויקט', 'error');
@@ -892,9 +915,6 @@ async function saveProject(projectId) {
         console.error('Error saving project:', error);
         showNotification('שגיאה בשמירת הפרויקט', 'error');
     }
-    
-    await loadProjects();
-    closeModal('projectModal');
     
     // Force update main website
     triggerMainSiteUpdate();
