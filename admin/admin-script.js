@@ -1215,7 +1215,80 @@ function initializeDesignSettings() {
 }
 
 function initializeContactManager() {
-    // Implementation for contact form management
+    loadContactSubmissions();
+}
+
+// Load contact submissions
+async function loadContactSubmissions() {
+    const submissionsList = document.getElementById('submissionsList');
+    if (!submissionsList) return;
+    
+    const siteData = await getSiteData();
+    const submissions = siteData.contact?.submissions || [];
+    
+    submissionsList.innerHTML = submissions.map(submission => `
+        <div class="submission-item ${submission.status}" data-id="${submission.id}">
+            <div class="submission-header">
+                <h4>${submission.name}</h4>
+                <span class="submission-date">${new Date(submission.timestamp).toLocaleDateString('he-IL')}</span>
+                <span class="submission-status status-${submission.status}">${getStatusText(submission.status)}</span>
+            </div>
+            <div class="submission-details">
+                <p><strong>אימייל:</strong> ${submission.email}</p>
+                <p><strong>טלפון:</strong> ${submission.phone}</p>
+                <p><strong>סוג פרויקט:</strong> ${submission.projectType || 'לא צוין'}</p>
+                <p><strong>תקציב:</strong> ${submission.budget || 'לא צוין'}</p>
+                <p><strong>לוח זמנים:</strong> ${submission.timeline || 'לא צוין'}</p>
+                <p><strong>תיאור:</strong> ${submission.description}</p>
+            </div>
+            <div class="submission-actions">
+                <button onclick="markAsRead(${submission.id})" class="btn btn-secondary">סמן כנקרא</button>
+                <button onclick="markAsReplied(${submission.id})" class="btn btn-primary">סמן כטופל</button>
+                <button onclick="deleteSubmission(${submission.id})" class="btn btn-danger">מחק</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function getStatusText(status) {
+    switch(status) {
+        case 'new': return 'חדש';
+        case 'read': return 'נקרא';
+        case 'replied': return 'טופל';
+        default: return status;
+    }
+}
+
+async function markAsRead(submissionId) {
+    await updateSubmissionStatus(submissionId, 'read');
+}
+
+async function markAsReplied(submissionId) {
+    await updateSubmissionStatus(submissionId, 'replied');
+}
+
+async function updateSubmissionStatus(submissionId, newStatus) {
+    const siteData = await getSiteData();
+    const submissions = siteData.contact?.submissions || [];
+    const submission = submissions.find(s => s.id === submissionId);
+    
+    if (submission) {
+        submission.status = newStatus;
+        await updateSiteData('contact', siteData.contact);
+        loadContactSubmissions();
+        showNotification('הסטטוס עודכן בהצלחה', 'success');
+    }
+}
+
+async function deleteSubmission(submissionId) {
+    if (confirm('האם אתה בטוח שברצונך למחוק פנייה זו?')) {
+        const siteData = await getSiteData();
+        const submissions = siteData.contact?.submissions || [];
+        siteData.contact.submissions = submissions.filter(s => s.id !== submissionId);
+        await updateSiteData('contact', siteData.contact);
+        loadContactSubmissions();
+        showNotification('הפנייה נמחקה בהצלחה', 'success');
+    }
 }
 
 function initializeMediaManager() {
@@ -1411,3 +1484,6 @@ window.deleteProject = deleteProject;
 window.closeModal = closeModal;
 window.openProjectModal = openProjectModal;
 window.saveProject = saveProject;
+window.markAsRead = markAsRead;
+window.markAsReplied = markAsReplied;
+window.deleteSubmission = deleteSubmission;

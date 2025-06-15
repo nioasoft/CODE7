@@ -202,23 +202,57 @@ app.post('/contact', (req, res) => {
         });
     }
     
-    // In a real application, you would save this to a database
-    // For now, we'll just log it and return success
-    console.log('New contact form submission:', {
-        name,
-        email,
-        phone,
-        projectType,
-        budget,
-        timeline,
-        description,
-        timestamp: new Date().toISOString()
-    });
-    
-    res.json({ 
-        success: true, 
-        message: 'תודה על פנייתך! נחזור אליך בהקדם.' 
-    });
+    try {
+        // Save contact form submission to site data
+        const dataPath = path.join(__dirname, 'data', 'siteData.json');
+        const siteData = JSON.parse(await fs.readFile(dataPath, 'utf8'));
+        
+        // Initialize contact submissions if not exists
+        if (!siteData.contact) {
+            siteData.contact = { fields: [], submissions: [] };
+        }
+        if (!siteData.contact.submissions) {
+            siteData.contact.submissions = [];
+        }
+        
+        // Create new submission
+        const newSubmission = {
+            id: Date.now(),
+            name,
+            email,
+            phone,
+            projectType,
+            budget,
+            timeline,
+            description,
+            timestamp: new Date().toISOString(),
+            status: 'new' // new, read, replied
+        };
+        
+        // Add to submissions array
+        siteData.contact.submissions.unshift(newSubmission); // Add to beginning
+        
+        // Keep only last 100 submissions
+        if (siteData.contact.submissions.length > 100) {
+            siteData.contact.submissions = siteData.contact.submissions.slice(0, 100);
+        }
+        
+        // Save back to file
+        await fs.writeFile(dataPath, JSON.stringify(siteData, null, 2));
+        
+        console.log('Contact form submission saved:', newSubmission);
+        
+        res.json({ 
+            success: true, 
+            message: 'תודה על פנייתך! נחזור אליך בהקדם.' 
+        });
+    } catch (error) {
+        console.error('Error saving contact submission:', error);
+        res.json({ 
+            success: true, 
+            message: 'תודה על פנייתך! נחזור אליך בהקדם.' 
+        });
+    }
 });
 
 // Site data endpoint
