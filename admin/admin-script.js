@@ -588,7 +588,7 @@ async function loadProjects() {
                 const projectId = parseInt(this.getAttribute('data-id'));
                 
                 if (action === 'edit') {
-                    await editProject(projectId);
+                    editProject(projectId);
                 } else if (action === 'delete') {
                     deleteProject(projectId);
                 }
