@@ -560,7 +560,20 @@ function initializeProjectsManager() {
 // Load projects
 async function loadProjects() {
     const projectsGrid = document.getElementById('projectsGrid');
-    const siteData = await getSiteData();
+    
+    // Try to get fresh data from localStorage first, then server
+    let siteData;
+    try {
+        const localData = localStorage.getItem('siteData') || localStorage.getItem('digitalCraftData');
+        if (localData) {
+            siteData = JSON.parse(localData);
+        } else {
+            siteData = await getSiteData();
+        }
+    } catch (error) {
+        siteData = await getSiteData();
+    }
+    
     const projects = siteData.projects || [];
     
     projectsGrid.innerHTML = projects.map(project => `
@@ -903,6 +916,10 @@ async function saveProject(projectId) {
         if (response.ok) {
             console.log('Project saved to server successfully');
             showNotification('הפרויקט נשמר בהצלחה', 'success');
+            
+            // Update local storage first
+            localStorage.setItem('siteData', JSON.stringify(siteData));
+            localStorage.setItem('digitalCraftData', JSON.stringify(siteData));
             
             // Refresh the projects display immediately
             await loadProjects();
