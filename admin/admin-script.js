@@ -622,13 +622,18 @@ async function openProjectModal(projectId = null) {
             const imagePreview = document.getElementById('projectImagePreview');
             if (project.image) {
                 imagePreview.innerHTML = `<img src="${project.image}" style="max-width: 200px; max-height: 150px; object-fit: cover; border-radius: 8px;">`;
+                // IMPORTANT: Store the existing image URL in dataset
+                imagePreview.dataset.imageData = project.image;
             } else {
                 imagePreview.innerHTML = '';
+                delete imagePreview.dataset.imageData;
             }
         }
     } else {
         form.reset();
-        document.getElementById('projectImagePreview').innerHTML = '';
+        const imagePreview = document.getElementById('projectImagePreview');
+        imagePreview.innerHTML = '';
+        delete imagePreview.dataset.imageData;
     }
     
     modal.classList.add('show');
@@ -698,7 +703,7 @@ function createProjectModal() {
     });
     
     modal.querySelector('[data-action="save-project"]').addEventListener('click', () => {
-        const currentProjectId = modal.dataset.projectId || null;
+        const currentProjectId = modal.dataset.projectId ? parseInt(modal.dataset.projectId) : null;
         saveProject(currentProjectId);
     });
     
@@ -824,6 +829,7 @@ async function saveProject(projectId) {
     const projects = siteData.projects || [];
     const preview = document.getElementById('projectImagePreview');
     const imageData = preview.dataset.imageData || null;
+    console.log('Saving project with image:', imageData);
     
     if (projectId) {
         // Edit existing
@@ -854,7 +860,9 @@ async function saveProject(projectId) {
         });
     }
     
-    await updateSiteData('projects', projects);
+    console.log('Projects before save:', projects);
+    const saveResult = await updateSiteData('projects', projects);
+    console.log('Save result:', saveResult);
     await loadProjects();
     closeModal('projectModal');
     showNotification('הפרויקט נשמר בהצלחה', 'success');
