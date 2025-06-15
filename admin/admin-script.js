@@ -915,37 +915,39 @@ async function updateSiteData(key, value) {
         const data = await getSiteData();
         data[key] = value;
         
-        // Save to server
-        const response = await fetch('/api/site-data', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-        });
-        
-        if (response.ok) {
-            const result = await response.json();
-            console.log('Data saved to server:', result.message);
-            
-            // Also update localStorage for offline access
+        // Try to save to server via JSON file update
+        try {
+            // For now, save to localStorage and notify user
             localStorage.setItem('siteData', JSON.stringify(data));
             localStorage.setItem('digitalCraftData', JSON.stringify(data));
             
-            return true;
-        } else {
-            throw new Error('Failed to save to server');
+            // Try to write to the JSON file directly (this will work if server supports it)
+            const response = await fetch('/api/site-data', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+            
+            if (response.ok) {
+                console.log('Data saved to server successfully');
+                return true;
+            } else {
+                throw new Error('Server save failed');
+            }
+        } catch (serverError) {
+            console.log('Server save failed, using localStorage:', serverError);
+            showNotification('הנתונים נשמרו זמנית - יש לעדכן את הקובץ ידנית', 'warning');
+            
+            // Show the user what to save
+            console.log('Current data to save to siteData.json:', JSON.stringify(data, null, 2));
+            
+            return false;
         }
     } catch (error) {
         console.error('Error saving data:', error);
-        
-        // Fallback to localStorage
-        const data = JSON.parse(localStorage.getItem('siteData') || '{}');
-        data[key] = value;
-        localStorage.setItem('siteData', JSON.stringify(data));
-        localStorage.setItem('digitalCraftData', JSON.stringify(data));
-        
-        showNotification('שמירה מקומית בלבד - אין חיבור לשרת', 'warning');
+        showNotification('שגיאה בשמירת הנתונים', 'error');
         return false;
     }
 }
