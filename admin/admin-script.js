@@ -1220,11 +1220,16 @@ function initializeContactManager() {
 
 // Load contact submissions
 async function loadContactSubmissions() {
+    console.log('Loading contact submissions...');
     const submissionsList = document.getElementById('submissionsList');
-    if (!submissionsList) return;
+    if (!submissionsList) {
+        console.log('submissionsList element not found');
+        return;
+    }
     
     const siteData = await getSiteData();
     const submissions = siteData.contact?.submissions || [];
+    console.log('Found submissions:', submissions.length, submissions);
     
     submissionsList.innerHTML = submissions.map(submission => `
         <div class="submission-item ${submission.status}" data-id="${submission.id}">
