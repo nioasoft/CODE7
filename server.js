@@ -214,18 +214,38 @@ app.get('/api/site-data', async (req, res) => {
         
         // Check if file exists, if not create it with default data
         if (!fsSync.existsSync(dataPath)) {
-            const defaultData = require('./data/siteData.json');
-            await fs.writeFile(dataPath, JSON.stringify(defaultData, null, 2));
+            const defaultDataPath = path.join(__dirname, 'data', 'siteData.json');
+            try {
+                const defaultData = JSON.parse(await fs.readFile(defaultDataPath, 'utf8'));
+                await fs.writeFile(dataPath, JSON.stringify(defaultData, null, 2));
+            } catch (error) {
+                console.error('Error reading default data file:', error);
+                // If can't read default file, just copy the existing data file
+                if (fsSync.existsSync(defaultDataPath)) {
+                    await fs.copyFile(defaultDataPath, dataPath);
+                }
+            }
         }
         
         const data = await fs.readFile(dataPath, 'utf8');
-        res.json(JSON.parse(data));
+        const jsonData = JSON.parse(data);
+        res.json(jsonData);
     } catch (error) {
         console.error('Error reading site data:', error);
-        res.status(500).json({ 
-            success: false, 
-            message: 'שגיאה בטעינת הנתונים' 
-        });
+        
+        // Try to return the original data file as fallback
+        try {
+            const fallbackPath = path.join(__dirname, 'data', 'siteData.json');
+            const fallbackData = await fs.readFile(fallbackPath, 'utf8');
+            const jsonData = JSON.parse(fallbackData);
+            res.json(jsonData);
+        } catch (fallbackError) {
+            console.error('Fallback also failed:', fallbackError);
+            res.status(500).json({ 
+                success: false, 
+                message: 'שגיאה בטעינת הנתונים' 
+            });
+        }
     }
 });
 
