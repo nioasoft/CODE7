@@ -779,33 +779,49 @@ function createProjectModal() {
     });
 }
 
-// Upload image to server function
+// Upload image to Cloudinary function
 function uploadImageToServer(file, callback) {
+    // Cloudinary configuration
+    const cloudName = 'dh1ompp1r';
+    const uploadPreset = 'code7_upload';
+    
     const formData = new FormData();
-    formData.append('image', file);
+    formData.append('file', file);
+    formData.append('upload_preset', uploadPreset);
+    formData.append('folder', 'code7/projects'); // Optional: organize in folders
+    
+    // Image transformations
+    formData.append('transformation', JSON.stringify({
+        width: 600,
+        height: 400,
+        crop: 'fill',
+        gravity: 'center',
+        quality: 'auto:best',
+        format: 'webp'
+    }));
     
     // Show loading notification
-    showNotification('מעלה תמונה...', 'info');
+    showNotification('מעלה תמונה ל-Cloudinary...', 'info');
     
-    console.log('Uploading image to /upload-image...');
+    console.log('Uploading image to Cloudinary...');
     
-    fetch('/upload-image', {
+    fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
         method: 'POST',
         body: formData
     })
     .then(response => {
-        console.log('Upload response status:', response.status);
+        console.log('Cloudinary response status:', response.status);
         return response.json();
     })
     .then(data => {
-        console.log('Upload response data:', data);
-        if (data.success) {
-            console.log('Image uploaded successfully:', data.imageUrl);
-            callback(data.imageUrl);
+        console.log('Cloudinary response data:', data);
+        if (data.secure_url) {
+            console.log('Image uploaded successfully:', data.secure_url);
+            callback(data.secure_url);
             showNotification('התמונה הועלתה בהצלחה', 'success');
         } else {
-            console.error('Upload failed:', data.message);
-            showNotification(data.message || 'שגיאה בהעלאת התמונה', 'error');
+            console.error('Upload failed:', data.error);
+            showNotification(data.error?.message || 'שגיאה בהעלאת התמונה', 'error');
         }
     })
     .catch(error => {
@@ -1284,17 +1300,48 @@ function uploadLogoImage(file) {
         return;
     }
     
-    // Upload logo to server
-    uploadImageToServer(file, async (imageUrl) => {
-        // Update settings with logo URL
-        const data = await getSiteData();
-        data.settings = data.settings || {};
-        data.settings.logo = imageUrl;
-        
-        await updateSiteData('settings', data.settings);
-        updateLogoDisplay(imageUrl);
-        updateMainSiteLogo(imageUrl);
-        showNotification('הלוגו עודכן בהצלחה', 'success');
+    // Upload logo to Cloudinary with different transformations
+    const cloudName = 'dh1ompp1r';
+    const uploadPreset = 'code7_upload';
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', uploadPreset);
+    formData.append('folder', 'code7/logos');
+    
+    // Logo transformations (maintain aspect ratio, max height for header)
+    formData.append('transformation', JSON.stringify({
+        height: 80,
+        crop: 'scale',
+        quality: 'auto:best',
+        format: 'auto'
+    }));
+    
+    showNotification('מעלה לוגו ל-Cloudinary...', 'info');
+    
+    fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(async (data) => {
+        if (data.secure_url) {
+            // Update settings with logo URL
+            const siteData = await getSiteData();
+            siteData.settings = siteData.settings || {};
+            siteData.settings.logo = data.secure_url;
+            
+            await updateSiteData('settings', siteData.settings);
+            updateLogoDisplay(data.secure_url);
+            updateMainSiteLogo(data.secure_url);
+            showNotification('הלוגו עודכן בהצלחה', 'success');
+        } else {
+            showNotification(data.error?.message || 'שגיאה בהעלאת הלוגו', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Logo upload error:', error);
+        showNotification('שגיאה בהעלאת הלוגו: ' + error.message, 'error');
     });
 }
 
