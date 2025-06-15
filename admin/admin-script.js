@@ -738,11 +738,31 @@ function createProjectModal() {
 
 // Upload image to server function
 function uploadImageToServer(file, callback) {
+    // For now, create a local data URL for preview
+    // Since server upload isn't working due to routing issues
+    
+    showNotification('מעלה תמונה...', 'info');
+    
+    // Create a file reader to convert to base64/data URL
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const dataUrl = e.target.result;
+        
+        // For now, use the data URL as the image source
+        // In production, this should be uploaded to server
+        showNotification('התמונה הועלתה זמנית - דרושה שמירה ידנית', 'warning');
+        callback(dataUrl);
+    };
+    
+    reader.onerror = function() {
+        showNotification('שגיאה בקריאת התמונה', 'error');
+    };
+    
+    reader.readAsDataURL(file);
+    
+    // Also try the server upload (might work if routing gets fixed)
     const formData = new FormData();
     formData.append('image', file);
-    
-    // Show loading notification
-    showNotification('מעלה תמונה...', 'info');
     
     fetch('/api/upload-image', {
         method: 'POST',
@@ -751,14 +771,14 @@ function uploadImageToServer(file, callback) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
+            console.log('Server upload successful:', data.imageUrl);
+            // Replace the data URL with server URL if successful
             callback(data.imageUrl);
-        } else {
-            showNotification(data.message || 'שגיאה בהעלאת התמונה', 'error');
+            showNotification('התמונה הועלתה לשרת בהצלחה', 'success');
         }
     })
     .catch(error => {
-        console.error('Upload error:', error);
-        showNotification('שגיאה בהעלאת התמונה', 'error');
+        console.log('Server upload failed, using data URL:', error);
     });
 }
 
