@@ -5,7 +5,7 @@ const helmet = require('helmet');
 const cors = require('cors');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || process.env.NODEJS_PORT || 5000;
 
 // Security middleware
 app.use(helmet({
@@ -33,18 +33,10 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Try to load optional dependencies for file uploads
-let multer, sharp, cloudinary;
+let multer, sharp;
 try {
     multer = require('multer');
     sharp = require('sharp');
-    cloudinary = require('cloudinary').v2;
-    
-    // Configure Cloudinary (uses environment variables)
-    cloudinary.config({
-        cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'demo',
-        api_key: process.env.CLOUDINARY_API_KEY || 'demo',
-        api_secret: process.env.CLOUDINARY_API_SECRET || 'demo'
-    });
 } catch (error) {
     console.log('Image upload dependencies not available. File upload will be disabled.');
 }
@@ -111,7 +103,7 @@ app.get('/admin/dashboard', (req, res) => {
 // API endpoint for image upload
 app.post('/api/upload-image', (req, res, next) => {
     // Check if upload functionality is available
-    if (!upload || !sharp || !cloudinary) {
+    if (!upload || !sharp) {
         return res.status(503).json({ 
             success: false, 
             message: 'העלאת תמונות אינה זמינה כרגע' 
@@ -134,8 +126,14 @@ app.post('/api/upload-image', (req, res, next) => {
                 });
             }
 
-            // Process image with Sharp: resize and optimize
-            const processedImageBuffer = await sharp(req.file.buffer)
+            // Generate unique filename
+            const timestamp = Date.now();
+            const randomString = Math.random().toString(36).substring(7);
+            const filename = `project_${timestamp}_${randomString}.webp`;
+            const filepath = path.join(uploadsDir, filename);
+
+            // Process image with Sharp: resize, optimize, convert to WebP
+            await sharp(req.file.buffer)
                 .resize(600, 400, { 
                     fit: 'cover',
                     position: 'center'
@@ -144,31 +142,14 @@ app.post('/api/upload-image', (req, res, next) => {
                     quality: 85,
                     effort: 6
                 })
-                .toBuffer();
+                .toFile(filepath);
 
-            // Upload to Cloudinary
-            const uploadResponse = await new Promise((resolve, reject) => {
-                cloudinary.uploader.upload_stream(
-                    {
-                        resource_type: 'image',
-                        format: 'webp',
-                        transformation: [
-                            { width: 600, height: 400, crop: 'fill' },
-                            { quality: 'auto:good' }
-                        ],
-                        folder: 'digital-craft'
-                    },
-                    (error, result) => {
-                        if (error) reject(error);
-                        else resolve(result);
-                    }
-                ).end(processedImageBuffer);
-            });
-
-            // Return the Cloudinary URL
+            // Return the image URL
+            const imageUrl = `/uploads/${filename}`;
+            
             res.json({ 
                 success: true, 
-                imageUrl: uploadResponse.secure_url,
+                imageUrl: imageUrl,
                 message: 'התמונה הועלתה בהצלחה'
             });
 
