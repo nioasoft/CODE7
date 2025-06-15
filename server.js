@@ -42,6 +42,7 @@ try {
 }
 
 const fs = require('fs').promises;
+const fsSync = require('fs');
 
 // Ensure uploads directory exists and configure multer only if available
 let uploadsDir, upload;
@@ -201,6 +202,61 @@ app.post('/api/contact', (req, res) => {
         success: true, 
         message: 'תודה על פנייתך! נחזור אליך בהקדם.' 
     });
+});
+
+// API endpoint to get site data
+app.get('/api/site-data', async (req, res) => {
+    try {
+        const dataPath = path.join(__dirname, 'data', 'siteData.json');
+        
+        // Create data directory if it doesn't exist
+        await fs.mkdir(path.dirname(dataPath), { recursive: true });
+        
+        // Check if file exists, if not create it with default data
+        if (!fsSync.existsSync(dataPath)) {
+            const defaultData = require('./data/siteData.json');
+            await fs.writeFile(dataPath, JSON.stringify(defaultData, null, 2));
+        }
+        
+        const data = await fs.readFile(dataPath, 'utf8');
+        res.json(JSON.parse(data));
+    } catch (error) {
+        console.error('Error reading site data:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'שגיאה בטעינת הנתונים' 
+        });
+    }
+});
+
+// API endpoint to update site data
+app.post('/api/site-data', async (req, res) => {
+    try {
+        const dataPath = path.join(__dirname, 'data', 'siteData.json');
+        const updatedData = req.body;
+        
+        // Validate data structure
+        if (!updatedData || typeof updatedData !== 'object') {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'נתונים לא תקינים' 
+            });
+        }
+        
+        // Write data to file
+        await fs.writeFile(dataPath, JSON.stringify(updatedData, null, 2));
+        
+        res.json({ 
+            success: true, 
+            message: 'הנתונים נשמרו בהצלחה' 
+        });
+    } catch (error) {
+        console.error('Error saving site data:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'שגיאה בשמירת הנתונים' 
+        });
+    }
 });
 
 // Health check endpoint

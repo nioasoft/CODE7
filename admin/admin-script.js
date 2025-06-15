@@ -553,9 +553,10 @@ function initializeProjectsManager() {
 }
 
 // Load projects
-function loadProjects() {
+async function loadProjects() {
     const projectsGrid = document.getElementById('projectsGrid');
-    const projects = getSiteData().projects || [];
+    const siteData = await getSiteData();
+    const projects = siteData.projects || [];
     
     projectsGrid.innerHTML = projects.map(project => `
         <div class="project-item" data-id="${project.id}">
@@ -792,7 +793,7 @@ function resizeImage(file, maxWidth, maxHeight, callback) {
 }
 
 // Save project
-function saveProject(projectId) {
+async function saveProject(projectId) {
     const name = document.getElementById('projectName').value;
     const description = document.getElementById('projectDescription').value;
     const type = document.getElementById('projectType').value;
@@ -837,8 +838,8 @@ function saveProject(projectId) {
         });
     }
     
-    updateSiteData('projects', projects);
-    loadProjects();
+    await updateSiteData('projects', projects);
+    await loadProjects();
     closeModal('projectModal');
     showNotification('הפרויקט נשמר בהצלחה', 'success');
     
@@ -886,23 +887,60 @@ function showNotification(message, type = 'success') {
 }
 
 // Data management
-function getSiteData() {
-    const data = localStorage.getItem('siteData');
-    return data ? JSON.parse(data) : getDefaultSiteData();
+async function getSiteData() {
+    try {
+        const response = await fetch('/api/site-data');
+        if (response.ok) {
+            const data = await response.json();
+            return data;
+        }
+    } catch (error) {
+        console.log('Error fetching from server, using default data:', error);
+    }
+    
+    // Fallback to default data
+    return getDefaultSiteData();
 }
 
-function updateSiteData(key, value) {
-    const data = getSiteData();
-    data[key] = value;
-    localStorage.setItem('siteData', JSON.stringify(data));
-    
-    // Update the actual website data
-    localStorage.setItem('digitalCraftData', JSON.stringify(data));
-    
-    // Debug logging
-    console.log('Updated site data:', key, value);
-    console.log('Full data saved:', data);
-    console.log('localStorage digitalCraftData:', localStorage.getItem('digitalCraftData'));
+async function updateSiteData(key, value) {
+    try {
+        // Get current data
+        const data = await getSiteData();
+        data[key] = value;
+        
+        // Save to server
+        const response = await fetch('/api/site-data', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            console.log('Data saved to server:', result.message);
+            
+            // Also update localStorage for offline access
+            localStorage.setItem('siteData', JSON.stringify(data));
+            localStorage.setItem('digitalCraftData', JSON.stringify(data));
+            
+            return true;
+        } else {
+            throw new Error('Failed to save to server');
+        }
+    } catch (error) {
+        console.error('Error saving data:', error);
+        
+        // Fallback to localStorage
+        const data = JSON.parse(localStorage.getItem('siteData') || '{}');
+        data[key] = value;
+        localStorage.setItem('siteData', JSON.stringify(data));
+        localStorage.setItem('digitalCraftData', JSON.stringify(data));
+        
+        showNotification('שמירה מקומית בלבד - אין חיבור לשרת', 'warning');
+        return false;
+    }
 }
 
 // Trigger main site update

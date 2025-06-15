@@ -312,84 +312,77 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Load dynamic content from admin data
-function loadDynamicContent() {
-    // Try both storage keys
-    let adminData = localStorage.getItem('digitalCraftData');
-    if (!adminData) {
-        adminData = localStorage.getItem('siteData');
-    }
-    
-    console.log('Loading dynamic content...', adminData ? 'Data found' : 'No data');
-    console.log('Raw data:', adminData);
-    
-    // If no data exists, try to load default data from admin system
-    if (!adminData) {
-        console.log('No data found, checking if admin panel has initialized data...');
-        // Check if we can get data from admin panel
-        const allLocalStorageKeys = Object.keys(localStorage);
-        console.log('All localStorage keys:', allLocalStorageKeys);
+// Load dynamic content from server
+async function loadDynamicContent() {
+    try {
+        // Fetch data from server
+        const response = await fetch('/api/site-data');
+        if (!response.ok) throw new Error('Failed to fetch site data');
         
-        // Initialize with basic default data if nothing exists
-        const basicDefaultData = {
-            projects: [],
-            hero: {
-                headline: 'יוצרים עבורך נוכחות דיגיטלית מושלמת',
-                subtitle: 'פתרונות מותאמים אישית לאתרים, אפליקציות ומערכות ניהול עסקיות'
+        const data = await response.json();
+        console.log('Loaded site data from server:', data);
+        
+        // Store in localStorage for offline access
+        localStorage.setItem('digitalCraftData', JSON.stringify(data));
+        
+        updatePageContent(data);
+    } catch (error) {
+        console.error('Error loading from server, trying localStorage:', error);
+        
+        // Fallback to localStorage
+        const adminData = localStorage.getItem('digitalCraftData') || localStorage.getItem('siteData');
+        if (adminData) {
+            try {
+                const data = JSON.parse(adminData);
+                updatePageContent(data);
+            } catch (parseError) {
+                console.error('Error parsing localStorage data:', parseError);
             }
-        };
-        localStorage.setItem('digitalCraftData', JSON.stringify(basicDefaultData));
-        adminData = JSON.stringify(basicDefaultData);
-        console.log('Initialized with basic default data');
+        }
+    }
+}
+
+// Update page content with data
+function updatePageContent(data) {
+    if (!data) return;
+    
+    // Update hero section
+    if (data.hero) {
+        const heroTitle = document.querySelector('.hero-title');
+        const heroSubtitle = document.querySelector('.hero-subtitle');
+        
+        if (heroTitle && data.hero.headline) {
+            heroTitle.textContent = data.hero.headline;
+        }
+        if (heroSubtitle && data.hero.subtitle) {
+            heroSubtitle.textContent = data.hero.subtitle;
+        }
     }
     
-    if (adminData) {
-        try {
-            const data = JSON.parse(adminData);
-            console.log('Parsed data:', data);
-            
-            // Update hero section
-            if (data.hero) {
-                const heroTitle = document.querySelector('.hero-title');
-                const heroSubtitle = document.querySelector('.hero-subtitle');
+    // Update projects with images
+    if (data.projects) {
+        console.log('Updating projects:', data.projects);
+        const projectCards = document.querySelectorAll('.project-card');
+        console.log('Found project cards:', projectCards.length);
+        data.projects.forEach((project, index) => {
+            console.log(`Processing project ${index}:`, project);
+            if (projectCards[index]) {
+                const projectImage = projectCards[index].querySelector('.project-image');
+                const projectName = projectCards[index].querySelector('h3');
+                const projectDesc = projectCards[index].querySelector('p');
                 
-                if (heroTitle && data.hero.headline) {
-                    heroTitle.textContent = data.hero.headline;
+                if (projectImage && project.image) {
+                    console.log(`Updating image for project ${index}:`, project.image);
+                    projectImage.innerHTML = `<img src="${project.image}" alt="${project.name}" style="width: 100%; height: 100%; object-fit: cover;">`;
                 }
-                if (heroSubtitle && data.hero.subtitle) {
-                    heroSubtitle.textContent = data.hero.subtitle;
+                if (projectName) {
+                    projectName.textContent = project.name;
+                }
+                if (projectDesc) {
+                    projectDesc.textContent = project.description;
                 }
             }
-            
-            // Update projects with images
-            if (data.projects) {
-                console.log('Updating projects:', data.projects);
-                const projectCards = document.querySelectorAll('.project-card');
-                console.log('Found project cards:', projectCards.length);
-                data.projects.forEach((project, index) => {
-                    console.log(`Processing project ${index}:`, project);
-                    if (projectCards[index]) {
-                        const projectImage = projectCards[index].querySelector('.project-image');
-                        const projectName = projectCards[index].querySelector('h3');
-                        const projectDesc = projectCards[index].querySelector('p');
-                        
-                        if (projectImage && project.image) {
-                            console.log(`Updating image for project ${index}:`, project.image);
-                            projectImage.innerHTML = `<img src="${project.image}" alt="${project.name}" style="width: 100%; height: 100%; object-fit: cover;">`;
-                        }
-                        if (projectName) {
-                            projectName.textContent = project.name;
-                        }
-                        if (projectDesc) {
-                            projectDesc.textContent = project.description;
-                        }
-                    }
-                });
-            }
-            
-        } catch (error) {
-            console.log('Error loading admin data:', error);
-        }
+        });
     }
 }
 
