@@ -1,0 +1,92 @@
+/* Contact Submissions Styles */
+.submission-item {
+    background: white;
+    border: 1px solid #e1e5e9;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    transition: all 0.2s ease;
+}
+
+.submission-item:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.submission-item.new {
+    border-left: 4px solid #007AFF;
+}
+
+.submission-item.read {
+    border-left: 4px solid #34C759;
+}
+
+.submission-item.replied {
+    border-left: 4px solid #8E8E93;
+}
+
+.submission-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.submission-header h4 {
+    margin: 0;
+    font-size: 18px;
+    color: #1d1d1f;
+}
+
+.submission-date {
+    font-size: 14px;
+    color: #8e8e93;
+}
+
+.submission-status {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.status-new {
+    background: #007AFF20;
+    color: #007AFF;
+}
+
+.status-read {
+    background: #34C75920;
+    color: #34C759;
+}
+
+.status-replied {
+    background: #8E8E9320;
+    color: #8E8E93;
+}
+
+.submission-details {
+    padding: 16px;
+}
+
+.submission-details p {
+    margin: 8px 0;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.submission-details strong {
+    color: #1d1d1f;
+    font-weight: 600;
+}
+
+.submission-actions {
+    padding: 16px;
+    border-top: 1px solid #f0f0f0;
+    display: flex;
+    gap: 8px;
+}
+
+.submission-actions .btn {
+    font-size: 14px;
+    padding: 8px 16px;
+}
