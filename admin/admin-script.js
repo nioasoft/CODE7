@@ -869,12 +869,30 @@ async function loadProjects() {
 // Project Modal Functions
 async function openProjectModal(projectId = null) {
     // Create project modal if it doesn't exist
-    if (!document.getElementById('projectModal')) {
-        createProjectModal();
+    let modal = document.getElementById('projectModal');
+    if (!modal) {
+        modal = createProjectModal();
+    }
+    const form = modal.querySelector('#projectForm');
+    
+    // Reset form first
+    if (form) {
+        form.reset();
     }
     
-    const modal = document.getElementById('projectModal');
-    const form = document.getElementById('projectForm');
+    // Clear image preview
+    const preview = modal.querySelector('#projectImagePreview');
+    if (preview) {
+        preview.innerHTML = '';
+        preview.removeAttribute('data-image-data');
+        preview.removeAttribute('data-pending-file');
+    }
+    
+    // Clear any pending upload flags
+    const imageInput = modal.querySelector('#projectImage');
+    if (imageInput) {
+        delete imageInput.dataset.pendingUpload;
+    }
     
     if (projectId) {
         const siteData = await getSiteData();
@@ -924,7 +942,13 @@ async function openProjectModal(projectId = null) {
 }
 
 function createProjectModal() {
-    const modal = document.createElement('div');
+    // Check if modal already exists
+    let modal = document.getElementById('projectModal');
+    if (modal) {
+        return modal;
+    }
+    
+    modal = document.createElement('div');
     modal.className = 'modal';
     modal.id = 'projectModal';
     modal.innerHTML = `
@@ -1067,6 +1091,8 @@ function createProjectModal() {
             }
         }
     });
+    
+    return modal;
 }
 
 // Upload project image specifically
