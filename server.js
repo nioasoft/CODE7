@@ -176,7 +176,7 @@ app.get('/admin/dashboard', (req, res) => {
 });
 
 // Authentication endpoints
-app.post('/admin/login', (req, res) => {
+app.post('/admin/login', async (req, res) => {
     const { username, password } = req.body;
     
     if (!username || !password) {
@@ -549,7 +549,7 @@ app.post('/upload-image', (req, res, next) => {
 });
 
 // Contact form endpoint
-app.post('/contact', (req, res) => {
+app.post('/contact', async (req, res) => {
     const { name, email, phone, projectType, budget, timeline, description } = req.body;
     
     // Basic validation
