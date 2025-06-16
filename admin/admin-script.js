@@ -500,6 +500,104 @@ function initializeServicesManager() {
     });
 }
 
+// Load hero section
+async function loadHero() {
+    const siteData = await getSiteData();
+    const hero = siteData.hero || {};
+    
+    // Update hero form fields
+    const headlineInput = document.getElementById('heroHeadline');
+    const subtitleInput = document.getElementById('heroSubtitle');
+    const ctaTextInput = document.getElementById('heroCtaText');
+    const ctaUrlInput = document.getElementById('heroCtaUrl');
+    
+    if (headlineInput) headlineInput.value = hero.headline || 'CODE7 - יוצרים עבורך נוכחות דיגיטלית מושלמת';
+    if (subtitleInput) subtitleInput.value = hero.subtitle || 'פתרונות מותאמים אישית לאתרים, אפליקציות ומערכות ניהול עסקיות';
+    if (ctaTextInput) ctaTextInput.value = hero.ctaText || 'בואו נתחיל';
+    if (ctaUrlInput) ctaUrlInput.value = hero.ctaUrl || '#contact';
+}
+
+// Load testimonials
+async function loadTestimonials() {
+    const testimonialsList = document.getElementById('testimonialsList');
+    if (!testimonialsList) {
+        console.log('Testimonials list element not found');
+        return;
+    }
+    
+    const siteData = await getSiteData();
+    const testimonials = siteData.testimonials || [];
+    
+    testimonialsList.innerHTML = testimonials.map((testimonial, index) => `
+        <div class="item-card">
+            <div class="item-header">
+                <h3>${testimonial.name}</h3>
+                <div class="item-actions">
+                    <button class="btn btn-sm btn-secondary" onclick="editTestimonial('${testimonial.id}')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                        ערוך
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteTestimonial('${testimonial.id}')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                        מחק
+                    </button>
+                </div>
+            </div>
+            <div class="item-content">
+                <p><strong>חברה:</strong> ${testimonial.company}</p>
+                <p><strong>תפקיד:</strong> ${testimonial.role}</p>
+                <p><strong>המלצה:</strong> ${testimonial.text}</p>
+                <p><strong>דירוג:</strong> ${'★'.repeat(testimonial.rating || 5)}</p>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Load FAQ
+async function loadFAQ() {
+    const faqList = document.getElementById('faqList');
+    if (!faqList) {
+        console.log('FAQ list element not found');
+        return;
+    }
+    
+    const siteData = await getSiteData();
+    const faq = siteData.faq || [];
+    
+    faqList.innerHTML = faq.map((item, index) => `
+        <div class="item-card">
+            <div class="item-header">
+                <h3>${item.question}</h3>
+                <div class="item-actions">
+                    <button class="btn btn-sm btn-secondary" onclick="editFAQ('${item.id}')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                        ערוך
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteFAQ('${item.id}')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                        מחק
+                    </button>
+                </div>
+            </div>
+            <div class="item-content">
+                <p>${item.answer}</p>
+            </div>
+        </div>
+    `).join('');
+}
+
 // Load services
 async function loadServices() {
     const servicesList = document.getElementById('servicesList');
@@ -2154,4 +2252,36 @@ window.saveSubmission = saveSubmission;
 window.updateSubmissionStatus = updateSubmissionStatus;
 window.switchToKanban = switchToKanban;
 window.switchToList = switchToList;
+
+// Testimonials management functions
+function editTestimonial(testimonialId) {
+    console.log('Edit testimonial:', testimonialId);
+    showNotification('עריכת המלצות - תכונה בפיתוח', 'info');
+}
+
+function deleteTestimonial(testimonialId) {
+    if (confirm('האם אתה בטוח שברצונך למחוק המלצה זו?')) {
+        console.log('Delete testimonial:', testimonialId);
+        showNotification('מחיקת המלצות - תכונה בפיתוח', 'info');
+    }
+}
+
+// FAQ management functions
+function editFAQ(faqId) {
+    console.log('Edit FAQ:', faqId);
+    showNotification('עריכת שאלות נפוצות - תכונה בפיתוח', 'info');
+}
+
+function deleteFAQ(faqId) {
+    if (confirm('האם אתה בטוח שברצונך למחוק שאלה זו?')) {
+        console.log('Delete FAQ:', faqId);
+        showNotification('מחיקת שאלות נפוצות - תכונה בפיתוח', 'info');
+    }
+}
+
+// Export new functions to window
+window.editTestimonial = editTestimonial;
+window.deleteTestimonial = deleteTestimonial;
+window.editFAQ = editFAQ;
+window.deleteFAQ = deleteFAQ;
 
