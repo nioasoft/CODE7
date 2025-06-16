@@ -129,31 +129,38 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Scroll animations
+    // Scroll animations - optimized for faster loading
     const observerOptions = {
-        threshold: 0.1,
-        rootMargin: '0px 0px -100px 0px'
+        threshold: 0.15, // Trigger earlier for faster response
+        rootMargin: '0px 0px -50px 0px' // Reduced margin for earlier trigger
     };
 
-    const observer = new IntersectionObserver(function(entries) {
+    // Make observer global for reuse
+    window.scrollObserver = new IntersectionObserver(function(entries) {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
                 entry.target.style.opacity = '1';
                 entry.target.style.transform = 'translateY(0)';
-                observer.unobserve(entry.target);
+                window.scrollObserver.unobserve(entry.target);
             }
         });
     }, observerOptions);
 
-    // Observe elements for animation
-    const animatedElements = document.querySelectorAll('.service-card, .project-card, .testimonial-card, .faq-item');
+    // Function to setup animations for elements
+    function setupAnimations() {
+        const animatedElements = document.querySelectorAll('.service-card, .project-card, .testimonial-card, .faq-item');
+        
+        animatedElements.forEach((el, index) => {
+            // Show content immediately, then animate
+            el.style.opacity = '0.3'; // Show content with low opacity first
+            el.style.transform = 'translateY(20px)';
+            el.style.transition = `opacity 0.4s ease ${index * 0.05}s, transform 0.4s ease ${index * 0.05}s`;
+            window.scrollObserver.observe(el);
+        });
+    }
     
-    animatedElements.forEach((el, index) => {
-        el.style.opacity = '0';
-        el.style.transform = 'translateY(30px)';
-        el.style.transition = `opacity 0.6s ease ${index * 0.1}s, transform 0.6s ease ${index * 0.1}s`;
-        observer.observe(el);
-    });
+    // Setup animations immediately
+    setupAnimations();
 
     // Parallax effect for hero background shapes
     const shapes = document.querySelectorAll('.geometric-shape');
@@ -276,54 +283,54 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load dynamic content from admin data
     loadDynamicContent();
     
-    // Set initial styles for hero animations
+    // Set initial styles for hero animations - faster and smoother
     const heroTitle = document.querySelector('.hero-title');
     const heroSubtitle = document.querySelector('.hero-subtitle');
     const ctaButton = document.querySelector('.cta-button');
     
     if (heroTitle) {
         heroTitle.style.opacity = '0';
-        heroTitle.style.transform = 'translateY(30px)';
-        heroTitle.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+        heroTitle.style.transform = 'translateY(20px)';
+        heroTitle.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
     }
     
     if (heroSubtitle) {
         heroSubtitle.style.opacity = '0';
-        heroSubtitle.style.transform = 'translateY(30px)';
-        heroSubtitle.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+        heroSubtitle.style.transform = 'translateY(20px)';
+        heroSubtitle.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
     }
     
     if (ctaButton) {
         ctaButton.style.opacity = '0';
-        ctaButton.style.transform = 'translateY(30px)';
-        ctaButton.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+        ctaButton.style.transform = 'translateY(20px)';
+        ctaButton.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
     }
 
-    // Initialize animations on page load
+    // Initialize animations on page load - much faster
     window.addEventListener('load', () => {
         document.body.classList.add('loaded');
         
-        // Animate hero content
+        // Animate hero content with shorter delays
         setTimeout(() => {
             if (heroTitle) {
                 heroTitle.style.opacity = '1';
                 heroTitle.style.transform = 'translateY(0)';
             }
-        }, 200);
+        }, 100);
         
         setTimeout(() => {
             if (heroSubtitle) {
                 heroSubtitle.style.opacity = '1';
                 heroSubtitle.style.transform = 'translateY(0)';
             }
-        }, 400);
+        }, 200);
         
         setTimeout(() => {
             if (ctaButton) {
                 ctaButton.style.opacity = '1';
                 ctaButton.style.transform = 'translateY(0)';
             }
-        }, 600);
+        }, 300);
     });
 });
 
@@ -492,6 +499,15 @@ function updateTestimonials(testimonials) {
             </div>
         </div>
     `).join('');
+    
+    // Re-setup animations for new content
+    const newCards = testimonialsGrid.querySelectorAll('.testimonial-card');
+    newCards.forEach((card, index) => {
+        card.style.opacity = '0.3';
+        card.style.transform = 'translateY(20px)';
+        card.style.transition = `opacity 0.4s ease ${index * 0.05}s, transform 0.4s ease ${index * 0.05}s`;
+        window.scrollObserver.observe(card);
+    });
 }
 
 // Function to update FAQ dynamically
@@ -512,6 +528,15 @@ function updateFAQ(faq) {
             </div>
         </div>
     `).join('');
+    
+    // Re-setup animations for new FAQ items
+    const newItems = faqList.querySelectorAll('.faq-item');
+    newItems.forEach((item, index) => {
+        item.style.opacity = '0.3';
+        item.style.transform = 'translateY(20px)';
+        item.style.transition = `opacity 0.4s ease ${index * 0.05}s, transform 0.4s ease ${index * 0.05}s`;
+        window.scrollObserver.observe(item);
+    });
     
     // Re-initialize FAQ accordion functionality
     initializeFAQAccordion();
