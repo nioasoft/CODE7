@@ -12,7 +12,7 @@ const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 
 // Function to determine recommended aspect ratio based on input context
 function getRecommendedAspectRatio(inputId) {
-    // Logo uploads - horizontal layout preferred
+    // Logo uploads - horizontal layout preferred, PNG recommended for transparency
     if (inputId === 'logoUpload' || inputId.includes('logo')) {
         return '2:1';
     }
@@ -66,7 +66,7 @@ function getUploadGuidelines(inputId) {
         '2:1': {
             ratio: 'פרופורציה מועדפת: 2:1',
             example: '(לדוגמה: 400x200, 600x300 פיקסלים)',
-            specs: '• רזולוציה גבוהה • רקע שקוף (PNG) • עד 2MB'
+            specs: '• רזולוציה גבוהה • PNG עם רקע שקוף • עד 2MB'
         },
         '3:2': {
             ratio: 'פרופורציה מועדפת: 3:2', 
@@ -299,14 +299,19 @@ async function applyCrop() {
             imageSmoothingQuality: 'high'
         });
         
-        // Convert to blob
+        // Convert to blob - preserve original format for transparency
+        const originalType = currentFile.type;
+        const shouldPreserveTransparency = originalType === 'image/png' || originalType === 'image/webp';
+        const outputType = shouldPreserveTransparency ? originalType : 'image/jpeg';
+        const quality = outputType === 'image/jpeg' ? 0.9 : undefined;
+        
         const blob = await new Promise(resolve => {
-            canvas.toBlob(resolve, 'image/jpeg', 0.9);
+            canvas.toBlob(resolve, outputType, quality);
         });
         
         // Create new file with cropped data
         const croppedFile = new File([blob], currentFile.name, {
-            type: 'image/jpeg',
+            type: outputType,
             lastModified: Date.now()
         });
         
@@ -423,7 +428,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     
                     // Show success message with image info
-                    showNotification(`תמונה הועלתה בהצלחה (${imageInfo.width}x${imageInfo.height} פיקסלים)`, 'success');
+                    let message = `תמונה הועלתה בהצלחה (${imageInfo.width}x${imageInfo.height} פיקסלים)`;
+                    
+                    // Special warning for logo uploads that aren't PNG
+                    if ((input.id === 'logoUpload' || input.id.includes('logo')) && file.type !== 'image/png') {
+                        message += ' - לשקיפות מושלמת, העלה קובץ PNG';
+                    }
+                    
+                    showNotification(message, 'success');
                     
                 } catch (error) {
                     // Clear the input if validation fails
