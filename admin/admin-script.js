@@ -832,8 +832,15 @@ async function loadProjects() {
     
     const projects = siteData.projects || [];
     
+    // Sort projects by order field (ascending)
+    projects.sort((a, b) => {
+        const orderA = a.order !== undefined ? a.order : 999999;
+        const orderB = b.order !== undefined ? b.order : 999999;
+        return orderA - orderB;
+    });
+    
     projectsGrid.innerHTML = projects.map(project => `
-        <div class="project-item" data-id="${project.id}">
+        <div class="project-item project-card" data-project-id="${project.id}" data-id="${project.id}">
             <div class="project-image">
                 ${project.image ? `<img src="${project.image}" alt="${project.name}" style="width: 100%; height: 200px; object-fit: cover;">` : '<div style="display: flex; align-items: center; justify-content: center; height: 200px; background: var(--admin-light-gray); color: var(--admin-text-secondary);">תמונה</div>'}
             </div>

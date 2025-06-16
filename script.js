@@ -377,35 +377,43 @@ function updatePageContent(data) {
         updateSiteLogo(data.settings.logo);
     }
     
-    // Update projects with images
+    // Update projects dynamically from JSON with proper ordering
     if (data.projects) {
         console.log('Updating projects with data:', data.projects);
-        const projectCards = document.querySelectorAll('.project-card');
-        console.log('Found project cards:', projectCards.length);
+        const projectsGrid = document.querySelector('.projects-grid');
         
-        data.projects.forEach((project, index) => {
-            if (projectCards[index]) {
-                const projectImage = projectCards[index].querySelector('.project-image');
-                const projectName = projectCards[index].querySelector('h3');
-                const projectDesc = projectCards[index].querySelector('p');
+        if (projectsGrid) {
+            // Clear existing static projects
+            projectsGrid.innerHTML = '';
+            
+            // Sort projects by order field (for drag & drop reordering)
+            const sortedProjects = data.projects
+                .filter(project => project.active)
+                .sort((a, b) => (a.order || 0) - (b.order || 0));
+            
+            // Create project cards dynamically from JSON
+            sortedProjects.forEach((project) => {
+                const projectCard = document.createElement('div');
+                projectCard.className = 'project-card';
+                projectCard.dataset.projectId = project.id; // For drag & drop
                 
-                console.log(`Project ${index}:`, project.name, 'Image:', project.image);
+                projectCard.innerHTML = `
+                    <div class="project-image">
+                        ${project.image ? `<img src="${project.image}" alt="${project.name}" style="width: 100%; height: 100%; object-fit: cover;">` : ''}
+                    </div>
+                    <div class="project-content">
+                        <h3>${project.name}</h3>
+                        <p>${project.description}</p>
+                        ${project.url ? `<a href="${project.url}" target="_blank" class="project-link">צפה בפרויקט</a>` : ''}
+                    </div>
+                `;
                 
-                if (projectImage && project.image) {
-                    projectImage.innerHTML = `<img src="${project.image}" alt="${project.name}" style="width: 100%; height: 100%; object-fit: cover;">`;
-                    console.log(`Added image for project ${index}`);
-                } else if (projectImage) {
-                    console.log(`No image for project ${index}`);
-                }
-                
-                if (projectName) {
-                    projectName.textContent = project.name;
-                }
-                if (projectDesc) {
-                    projectDesc.textContent = project.description;
-                }
-            }
-        });
+                projectsGrid.appendChild(projectCard);
+                console.log(`Added project: ${project.name} with image: ${project.image ? 'YES' : 'NO'} at order: ${project.order || 0}`);
+            });
+            
+            console.log(`Total projects displayed: ${sortedProjects.length}`);
+        }
     }
     
     // Update testimonials
