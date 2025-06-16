@@ -453,9 +453,12 @@ function updateSiteLogo(logoUrl) {
     
     if (siteLogo && siteTitle) {
         if (logoUrl) {
+            // Force reload to bypass cache
+            siteLogo.onload = function() {
+                this.style.display = 'block';
+                siteTitle.style.display = 'none';
+            };
             siteLogo.src = logoUrl;
-            siteLogo.style.display = 'block';
-            siteTitle.style.display = 'none';
         } else {
             siteLogo.style.display = 'none';
             siteTitle.style.display = 'block';
