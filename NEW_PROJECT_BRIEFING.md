@@ -82,10 +82,43 @@ Colors: ורוד וזהב"
 
 #### 🌐 טכני:
 - "איזה שם דומיין?"
-- "איפה מתכנן לארח? (Heroku/Vercel/אחר)"
-- "יש העדפה לטכנולוגיה מסוימת?"
+- "האם יש לו דומיין או נרכוש עבורו?"
+- "יש העדפה לעיצוב/צבעים מסוימים?"
 
-### שלב 3: בחירת קומפוננטים
+### שלב 3: הגדרת מסד נתונים
+**חשוב! לכל פרויקט חדש צריך להגדיר מסד נתונים נפרד:**
+
+1. **צור פרויקט חדש ב-Supabase**:
+   - לך ל-[supabase.com](https://supabase.com/dashboard)
+   - לחץ "Create new project"
+   - שם פרויקט: `client-[שם-הלקוח]` (למשל: `client-barbershop`)
+   - סיסמה חזקה
+   - שמור את פרטי החיבור!
+
+2. **הגדר את הטבלאות**:
+   ```sql
+   -- הרץ את הקוד הזה ב-SQL Editor של Supabase:
+   
+   CREATE TABLE IF NOT EXISTS sites (
+       id SERIAL PRIMARY KEY,
+       domain VARCHAR(255) UNIQUE NOT NULL,
+       data JSONB NOT NULL,
+       created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+       updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+   );
+   
+   ALTER TABLE sites ENABLE ROW LEVEL SECURITY;
+   
+   CREATE POLICY "Allow all operations" ON sites
+       FOR ALL TO authenticated, anon
+       USING (true) WITH CHECK (true);
+   ```
+
+3. **עדכן פרטי חיבור בפרויקט**:
+   - צור קובץ `.env` עם פרטי Supabase החדשים
+   - עדכן את `lib/supabase.js` עם הפרטים
+
+### שלב 4: בחירת קומפוננטים
 לפי התשובות, תחליט איזה קומפוננטים להשתמש:
 
 **לכל אתר בסיסי:**
@@ -98,12 +131,15 @@ Colors: ורוד וזהב"
 - **פורטפוליו**: + `projects-grid` + `testimonials-cards`
 - **עסק מקומי**: + `services-cards` + `faq-accordion`
 
-### שלב 4: התחלת העבודה
+### שלב 5: התחלת העבודה
 1. **קרא** מהmaster repository את הקומפוננטים שבחרת
 2. **צור** את המבנה הבסיסי בפרויקט החדש
-3. **התאם** צבעים, טקסטים, תמונות
-4. **הוסף** תוכן ספציפי ללקוח
-5. **בדוק** שהכל עובד במובייל
+3. **הגדר Supabase** חדש ללקוח (חובה!)
+4. **התאם** צבעים, טקסטים, תמונות
+5. **הוסף** תוכן ספציפי ללקוח
+6. **טען נתונים ראשוניים** למסד הנתונים
+7. **פרוס ל-DigitalOcean** עם הקונפיגורציה הנכונה
+8. **בדוק** שהכל עובד במובייל
 
 ---
 
@@ -174,6 +210,80 @@ Colors: ורוד וזהב"
 
 ---
 
-**גרסה**: 1.0  
+## 🗄️ הגדרת מסד נתונים ללקוח חדש
+
+### למה כל לקוח צריך Supabase נפרד?
+
+✅ **פרטיות מלאה** - כל לקוח עם הנתונים שלו  
+✅ **ביצועים טובים יותר** - לא עומס על מסד אחד  
+✅ **אבטחה גבוהה** - הפרדה מלאה בין לקוחות  
+✅ **קלות ניהול** - כל לקוח יכול לקבל גישה למסד שלו בעתיד  
+
+### תהליך הגדרה מהיר:
+
+**1. צור פרויקט חדש:**
+```
+supabase.com/dashboard → Create new project
+├── Project name: client-[שם-לקוח]
+├── Database password: [סיסמה חזקה]
+└── Region: West Europe (קרוב לישראל)
+```
+
+**החשוב:** כל אתר יתארח ב-**DigitalOcean** עם Supabase נפרד למסד נתונים
+
+**2. הגדר טבלאות:**
+העתק את הקוד מ-`scripts/setup-supabase.sql` לSQL Editor
+
+**3. עדכן קונפיגורציה:**
+```javascript
+// lib/supabase.js
+const supabaseUrl = 'https://[project-id].supabase.co';
+const supabaseKey = '[anon-key]';
+```
+
+**4. טען נתונים ראשוניים:**
+הרץ `node scripts/simple-migrate.js` עם הדומיין החדש
+
+### סקריפט מעבר מהיר ללקוח חדש:
+
+```javascript
+// scripts/setup-new-client.js
+const clientDomain = 'client-name.com';
+const defaultData = {
+    hero: { headline: '...', subtitle: '...' },
+    services: [],
+    projects: [],
+    // ... מבנה בסיסי
+};
+
+await db.updateSiteData(defaultData, clientDomain);
+```
+
+---
+
+## 🔄 העדכון החשוב - מסד נתונים משותף למסד נפרד
+
+**לפני (ישן):** כל האתרים במסד נתונים אחד  
+**עכשיו (חדש):** כל לקוח עם Supabase נפרד  
+
+**יתרונות העדכון:**
+- פרטיות מלאה ללקוח
+- גיבויים נפרדים  
+- ביצועים טובים יותר
+- אפשרות למסור למנהל הלקוח בעתיד
+
+### ארכיטקטורה מומלצת:
+```
+אתר הלקוח (DigitalOcean Droplet)
+├── Frontend: HTML/CSS/JS + קומפוננטים
+├── Backend: Node.js + Express  
+├── Database: Supabase (נפרד לכל לקוח)
+├── Images: Cloudinary
+└── Domain: דומיין הלקוח
+```
+
+---
+
+**גרסה**: 2.0  
 **עדכון אחרון**: יוני 2025  
-**סטטוס**: מוכן לשימוש 🚀
+**סטטוס**: מוכן לשימוש עם Supabase 🚀
