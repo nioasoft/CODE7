@@ -729,6 +729,61 @@ app.post('/site-data', async (req, res) => {
     }
 });
 
+// Project reorder endpoint
+app.post('/admin/projects/reorder', requireAuth, async (req, res) => {
+    try {
+        const { projectOrder } = req.body;
+        
+        if (!Array.isArray(projectOrder)) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Invalid project order data' 
+            });
+        }
+        
+        // Read current data
+        const dataPath = path.join(__dirname, 'data', 'siteData.json');
+        const currentData = JSON.parse(await fs.readFile(dataPath, 'utf8'));
+        
+        // Update project order
+        if (currentData.projects && Array.isArray(currentData.projects)) {
+            // Create a map of current projects
+            const projectMap = new Map();
+            currentData.projects.forEach(project => {
+                projectMap.set(project.id, project);
+            });
+            
+            // Reorder projects based on the new order
+            const reorderedProjects = [];
+            projectOrder.forEach(orderItem => {
+                const project = projectMap.get(orderItem.id);
+                if (project) {
+                    project.order = orderItem.order;
+                    reorderedProjects.push(project);
+                }
+            });
+            
+            // Sort by order and update the data
+            reorderedProjects.sort((a, b) => (a.order || 0) - (b.order || 0));
+            currentData.projects = reorderedProjects;
+        }
+        
+        // Save back to file
+        await fs.writeFile(dataPath, JSON.stringify(currentData, null, 2), 'utf8');
+        
+        res.json({ 
+            success: true, 
+            message: 'סידור הפרויקטים עודכן בהצלחה' 
+        });
+    } catch (error) {
+        console.error('Error reordering projects:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'שגיאה בעדכון סידור הפרויקטים: ' + error.message 
+        });
+    }
+});
+
 // Alternative update endpoint for specific data
 app.post('/update-project', async (req, res) => {
     try {

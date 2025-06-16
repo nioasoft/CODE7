@@ -2545,6 +2545,140 @@ async function saveFAQ() {
     }
 }
 
+// Project reordering functionality
+let isReorderMode = false;
+let sortableInstance = null;
+
+function toggleProjectReorder() {
+    isReorderMode = !isReorderMode;
+    const reorderBtn = document.getElementById('reorderProjects');
+    const projectsGrid = document.getElementById('projectsGrid');
+    
+    if (isReorderMode) {
+        // Enter reorder mode
+        reorderBtn.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            שמור סידור
+        `;
+        reorderBtn.classList.add('btn-success');
+        reorderBtn.classList.remove('btn-secondary');
+        
+        // Add drag styles to project cards
+        projectsGrid.classList.add('reorder-mode');
+        
+        // Initialize sortable
+        initProjectSortable();
+        
+        showNotification('משיכה ושחרור לסידור הפרויקטים', 'info');
+    } else {
+        // Exit reorder mode and save
+        saveProjectOrder();
+        exitReorderMode();
+    }
+}
+
+function exitReorderMode() {
+    const reorderBtn = document.getElementById('reorderProjects');
+    const projectsGrid = document.getElementById('projectsGrid');
+    
+    reorderBtn.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+        סדר פרויקטים
+    `;
+    reorderBtn.classList.remove('btn-success');
+    reorderBtn.classList.add('btn-secondary');
+    
+    projectsGrid.classList.remove('reorder-mode');
+    
+    // Destroy sortable instance
+    if (sortableInstance) {
+        sortableInstance.destroy();
+        sortableInstance = null;
+    }
+    
+    isReorderMode = false;
+}
+
+function initProjectSortable() {
+    const projectsGrid = document.getElementById('projectsGrid');
+    
+    // Add SortableJS CDN if not loaded
+    if (typeof Sortable === 'undefined') {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js';
+        script.onload = () => createSortableInstance(projectsGrid);
+        document.head.appendChild(script);
+    } else {
+        createSortableInstance(projectsGrid);
+    }
+}
+
+function createSortableInstance(projectsGrid) {
+    sortableInstance = Sortable.create(projectsGrid, {
+        animation: 150,
+        ghostClass: 'sortable-ghost',
+        chosenClass: 'sortable-chosen',
+        dragClass: 'sortable-drag',
+        handle: '.project-card',
+        onStart: function(evt) {
+            document.body.classList.add('dragging');
+        },
+        onEnd: function(evt) {
+            document.body.classList.remove('dragging');
+        }
+    });
+}
+
+async function saveProjectOrder() {
+    try {
+        const projectsGrid = document.getElementById('projectsGrid');
+        const projectCards = projectsGrid.querySelectorAll('.project-card');
+        const projectOrder = [];
+        
+        projectCards.forEach((card, index) => {
+            const projectId = card.dataset.projectId;
+            if (projectId) {
+                projectOrder.push({
+                    id: projectId,
+                    order: index
+                });
+            }
+        });
+        
+        const response = await fetch('/admin/projects/reorder', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...getAuthHeaders()
+            },
+            body: JSON.stringify({ projectOrder })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showNotification('סידור הפרויקטים נשמר בהצלחה', 'success');
+            
+            // Update preview if open
+            if (window.websitePreview && window.websitePreview.isPreviewOpen) {
+                window.websitePreview.updatePreview();
+            }
+        } else {
+            showNotification('שגיאה בשמירת סידור הפרויקטים', 'error');
+        }
+        
+    } catch (error) {
+        console.error('Error saving project order:', error);
+        showNotification('שגיאה בשמירת סידור הפרויקטים', 'error');
+    }
+}
+
 // Initialize testimonial and FAQ buttons
 document.addEventListener('DOMContentLoaded', function() {
     // Add testimonial button
@@ -2557,6 +2691,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const addFaqBtn = document.getElementById('addFaq');
     if (addFaqBtn) {
         addFaqBtn.addEventListener('click', () => openFAQModal());
+    }
+    
+    // Project reorder button
+    const reorderProjectsBtn = document.getElementById('reorderProjects');
+    if (reorderProjectsBtn) {
+        reorderProjectsBtn.addEventListener('click', toggleProjectReorder);
     }
     
     // Modal close buttons

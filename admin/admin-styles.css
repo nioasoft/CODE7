@@ -1,5 +1,63 @@
 /* Admin Panel Styles */
 
+/* Project Reordering Styles */
+.projects-grid.reorder-mode .project-card {
+    cursor: grab;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.projects-grid.reorder-mode .project-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.projects-grid.reorder-mode .project-card:active {
+    cursor: grabbing;
+}
+
+.sortable-ghost {
+    opacity: 0.5;
+    transform: rotate(2deg);
+}
+
+.sortable-chosen {
+    transform: scale(1.02);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    z-index: 1000;
+}
+
+.sortable-drag {
+    transform: rotate(3deg);
+    transition: none !important;
+}
+
+body.dragging {
+    cursor: grabbing !important;
+}
+
+body.dragging * {
+    cursor: grabbing !important;
+}
+
+.projects-grid.reorder-mode::before {
+    content: "גרור כרטיסי פרויקטים לסידור מחדש";
+    display: block;
+    text-align: center;
+    padding: 10px;
+    background: linear-gradient(135deg, #4F46E5, #7C3AED);
+    color: white;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-weight: 500;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.8; }
+    100% { opacity: 1; }
+}
+
 /* Kanban Board Styles */
 .kanban-controls {
     display: flex;
