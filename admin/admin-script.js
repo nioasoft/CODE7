@@ -1061,6 +1061,13 @@ function createProjectModal() {
                     preview.dataset.pendingFile = 'true';
                     this.dataset.pendingUpload = 'true';
                     
+                    // Re-enable save button for new projects
+                    const saveButton = document.querySelector('#projectModal .btn-primary');
+                    if (saveButton && saveButton.disabled) {
+                        saveButton.disabled = false;
+                        saveButton.textContent = 'שמור';
+                    }
+                    
                     showNotification('תמונה נבחרה בהצלחה', 'success');
                     
                 }).catch(error => {
