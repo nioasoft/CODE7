@@ -103,14 +103,29 @@ document.addEventListener('DOMContentLoaded', function() {
         const formData = new FormData(this);
         const data = Object.fromEntries(formData);
         
-        // Here you would normally send the data to a server
-        console.log('Form Data:', data);
+        // Form data prepared for submission
         
-        // Show success message
-        alert('תודה על פנייתך! נחזור אליך בהקדם.');
-        
-        // Reset form
-        this.reset();
+        // Send data to server
+        fetch('/contact', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                alert('תודה על פנייתך! נחזור אליך בהקדם.');
+                this.reset();
+            } else {
+                alert('שגיאה בשליחת הטופס: ' + result.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error sending form:', error);
+            alert('שגיאה בשליחת הטופס. נסה שוב מאוחר יותר.');
+        });
         });
     }
 
@@ -320,25 +335,12 @@ async function loadDynamicContent() {
         if (!response.ok) throw new Error('Failed to fetch site data');
         
         const data = await response.json();
-        console.log('Loaded site data from server:', data);
-        
-        // Store in localStorage for offline access
-        localStorage.setItem('digitalCraftData', JSON.stringify(data));
+        // Site data loaded successfully from server
         
         updatePageContent(data);
     } catch (error) {
-        console.error('Error loading from server, trying localStorage:', error);
-        
-        // Fallback to localStorage
-        const adminData = localStorage.getItem('digitalCraftData') || localStorage.getItem('siteData');
-        if (adminData) {
-            try {
-                const data = JSON.parse(adminData);
-                updatePageContent(data);
-            } catch (parseError) {
-                console.error('Error parsing localStorage data:', parseError);
-            }
-        }
+        console.error('Error loading site data from server:', error);
+        // No fallback to localStorage - we want to rely on server data only
     }
 }
 
@@ -366,18 +368,14 @@ function updatePageContent(data) {
     
     // Update projects with images
     if (data.projects) {
-        console.log('Updating projects:', data.projects);
         const projectCards = document.querySelectorAll('.project-card');
-        console.log('Found project cards:', projectCards.length);
         data.projects.forEach((project, index) => {
-            console.log(`Processing project ${index}:`, project);
             if (projectCards[index]) {
                 const projectImage = projectCards[index].querySelector('.project-image');
                 const projectName = projectCards[index].querySelector('h3');
                 const projectDesc = projectCards[index].querySelector('p');
                 
                 if (projectImage && project.image) {
-                    console.log(`Updating image for project ${index}:`, project.image);
                     projectImage.innerHTML = `<img src="${project.image}" alt="${project.name}" style="width: 100%; height: 100%; object-fit: cover;">`;
                 }
                 if (projectName) {
@@ -424,23 +422,13 @@ function updateFromAdmin(data) {
     }
 }
 
-// Listen for storage changes (including custom dispatched events)
-window.addEventListener('storage', function(e) {
-    if (e.key === 'digitalCraftData') {
-        console.log('Data updated, reloading content...');
-        setTimeout(() => {
-            loadDynamicContent();
-        }, 100);
-    }
-});
-
 // Listen for messages from admin panel
 window.addEventListener('message', function(e) {
     if (e.data && e.data.type === 'dataUpdate') {
-        console.log('Received data update from admin panel');
+        // Received data update notification from admin panel
         loadDynamicContent();
     } else if (e.data && e.data.type === 'logoUpdate') {
-        console.log('Received logo update from admin panel');
+        // Received logo update from admin panel
         updateSiteLogo(e.data.logoUrl);
     }
 });

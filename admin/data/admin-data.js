@@ -1,9 +1,9 @@
 // Admin Data Management System
 class AdminDataManager {
     constructor() {
-        this.dataKey = 'digitalCraftData';
-        this.backupKey = 'digitalCraftBackup';
-        this.settingsKey = 'digitalCraftSettings';
+        this.dataKey = 'code7Data';
+        this.backupKey = 'code7Backup';
+        this.settingsKey = 'code7Settings';
         
         this.initialize();
     }
@@ -358,14 +358,14 @@ class AdminDataManager {
                 }
             },
             seo: {
-                title: 'Digital Craft - יוצרים עבורך נוכחות דיגיטלית מושלמת',
-                description: 'Digital Craft - פתרונות מותאמים אישית לאתרים, אפליקציות ומערכות ניהול עסקיות. בניית אתרי תדמית, פיתוח אפליקציות וחנויות מקוונות.',
-                keywords: 'בניית אתרים, פיתוח אפליקציות, עיצוב אתרים, חנויות מקוונות, מערכות ניהול, Digital Craft',
-                author: 'Digital Craft',
+                title: 'CODE7 - יוצרים עבורך נוכחות דיגיטלית מושלמת',
+                description: 'CODE7 - פתרונות מותאמים אישית לאתרים, אפליקציות ומערכות ניהול עסקיות. בניית אתרי תדמית, פיתוח אפליקציות וחנויות מקוונות.',
+                keywords: 'בניית אתרים, פיתוח אפליקציות, עיצוב אתרים, חנויות מקוונות, מערכות ניהול, CODE7',
+                author: 'CODE7',
                 language: 'he',
                 robots: 'index, follow',
                 openGraph: {
-                    title: 'Digital Craft - יוצרים עבורך נוכחות דיגיטלית מושלמת',
+                    title: 'CODE7 - יוצרים עבורך נוכחות דיגיטלית מושלמת',
                     description: 'פתרונות מותאמים אישית לאתרים, אפליקציות ומערכות ניהול עסקיות',
                     image: null,
                     url: ''
@@ -373,7 +373,7 @@ class AdminDataManager {
             },
             settings: {
                 business: {
-                    name: 'Digital Craft',
+                    name: 'CODE7',
                     phone: '055-2882839',
                     email: 'benatia.asaf@gmail.com',
                     address: '',
@@ -463,7 +463,7 @@ class AdminDataManager {
                 localStorage.setItem(this.backupKey, JSON.stringify(backup));
                 return true;
             } catch (error) {
-                console.error('Error creating backup:', error);
+                // Error creating backup
                 return false;
             }
         }
@@ -479,7 +479,7 @@ class AdminDataManager {
                 return this.setData(backupData.data);
             }
         } catch (error) {
-            console.error('Error restoring backup:', error);
+            // Error restoring backup
         }
         return false;
     }
@@ -492,7 +492,7 @@ class AdminDataManager {
                 data,
                 exportDate: new Date().toISOString(),
                 version: '1.0',
-                site: 'Digital Craft'
+                site: 'CODE7'
             };
             
             const blob = new Blob([JSON.stringify(exportData, null, 2)], { 
@@ -502,7 +502,7 @@ class AdminDataManager {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `digital-craft-export-${new Date().toISOString().split('T')[0]}.json`;
+            a.download = `code7-export-${new Date().toISOString().split('T')[0]}.json`;
             a.click();
             
             URL.revokeObjectURL(url);
@@ -574,7 +574,7 @@ class AdminDataManager {
                 toRemove.forEach(key => localStorage.removeItem(key));
             }
         } catch (error) {
-            console.error('Error cleaning old backups:', error);
+            // Error cleaning old backups
         }
     }
     
@@ -592,7 +592,7 @@ class AdminDataManager {
                 try {
                     callback();
                 } catch (error) {
-                    console.error('Error in data change callback:', error);
+                    // Error in data change callback
                 }
             });
         }

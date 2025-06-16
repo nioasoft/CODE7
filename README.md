@@ -1,11 +1,11 @@
-# Digital Craft - Professional Website
+# CODE7 - Professional Website
 
 ## 🚀 Live Website
 **Production:** https://asisoft.herokuapp.com  
 **Admin Panel:** https://asisoft.herokuapp.com/admin
 
 ## 📋 Project Description
-Professional Hebrew website for Digital Craft - a premium web development and app creation company. Features a complete content management system with real-time preview capabilities.
+Professional Hebrew website for CODE7 - a premium web development and app creation company. Features a complete content management system with real-time preview capabilities.
 
 ## ✨ Features
 
@@ -181,9 +181,9 @@ For technical support or questions:
 - **Phone:** 055-2882839
 
 ## 📄 License
-© 2025 Digital Craft. All rights reserved.
+© 2025 CODE7. All rights reserved.
 
 ---
 
-**Built with ❤️ by Digital Craft**  
+**Built with ❤️ by CODE7**  
 Professional web development and app creation services.

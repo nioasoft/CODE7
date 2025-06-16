@@ -1,7 +1,7 @@
 {
-  "name": "digital-craft-website",
+  "name": "code7-website",
   "version": "1.0.0",
-  "description": "Digital Craft - Professional Web Development Company Website",
+  "description": "CODE7 - Professional Web Development Company Website",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -22,16 +22,16 @@
   },
   "keywords": [
     "web-development",
-    "digital-craft",
+    "code7",
     "portfolio",
     "hebrew",
     "website"
   ],
-  "author": "Digital Craft",
+  "author": "CODE7",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/your-username/digital-craft.git"
+    "url": "git+https://github.com/your-username/code7.git"
   },
   "homepage": "https://asisoft.herokuapp.com"
 }

@@ -3,9 +3,17 @@ const path = require('path');
 const compression = require('compression');
 const helmet = require('helmet');
 const cors = require('cors');
+const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || process.env.NODEJS_PORT || 5000;
+
+// Admin credentials (in production, use environment variables and proper hashing)
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+
+// Session storage (in production, use Redis or database)
+const sessions = new Map();
 
 // Security middleware - CSP disabled temporarily for Cloudinary testing
 app.use(helmet({
@@ -21,6 +29,55 @@ app.use(compression());
 // Parse JSON bodies
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Session middleware
+function generateSessionId() {
+    return crypto.randomBytes(32).toString('hex');
+}
+
+function createSession(userId) {
+    const sessionId = generateSessionId();
+    const session = {
+        id: sessionId,
+        userId,
+        createdAt: new Date(),
+        lastActivity: new Date()
+    };
+    sessions.set(sessionId, session);
+    return sessionId;
+}
+
+function validateSession(sessionId) {
+    const session = sessions.get(sessionId);
+    if (!session) return null;
+    
+    // Check if session expired (24 hours)
+    const now = new Date();
+    const sessionAge = now - session.lastActivity;
+    if (sessionAge > 24 * 60 * 60 * 1000) {
+        sessions.delete(sessionId);
+        return null;
+    }
+    
+    // Update last activity
+    session.lastActivity = now;
+    return session;
+}
+
+function requireAuth(req, res, next) {
+    const sessionId = req.headers['x-session-id'] || req.cookies?.sessionId;
+    const session = validateSession(sessionId);
+    
+    if (!session) {
+        return res.status(401).json({ 
+            success: false, 
+            message: 'Authentication required' 
+        });
+    }
+    
+    req.session = session;
+    next();
+}
 
 // Try to load optional dependencies for file uploads
 let multer, sharp;
@@ -116,6 +173,316 @@ app.get('/admin/', (req, res) => {
 
 app.get('/admin/dashboard', (req, res) => {
     res.sendFile(path.join(__dirname, 'admin', 'dashboard.html'));
+});
+
+// Authentication endpoints
+app.post('/admin/login', (req, res) => {
+    const { username, password } = req.body;
+    
+    if (!username || !password) {
+        return res.status(400).json({ 
+            success: false, 
+            message: 'חסרים פרטי התחברות' 
+        });
+    }
+    
+    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+        const sessionId = createSession('admin');
+        
+        res.json({ 
+            success: true, 
+            sessionId,
+            message: 'התחברות בוצעה בהצלחה' 
+        });
+    } else {
+        res.status(401).json({ 
+            success: false, 
+            message: 'שם משתמש או סיסמה שגויים' 
+        });
+    }
+});
+
+app.post('/admin/logout', requireAuth, (req, res) => {
+    const sessionId = req.headers['x-session-id'] || req.cookies?.sessionId;
+    if (sessionId) {
+        sessions.delete(sessionId);
+    }
+    
+    res.json({ 
+        success: true, 
+        message: 'התנתקות בוצעה בהצלחה' 
+    });
+});
+
+app.get('/admin/auth/verify', (req, res) => {
+    const sessionId = req.headers['x-session-id'] || req.cookies?.sessionId;
+    const session = validateSession(sessionId);
+    
+    if (session) {
+        res.json({ 
+            success: true, 
+            authenticated: true 
+        });
+    } else {
+        res.status(401).json({ 
+            success: false, 
+            authenticated: false 
+        });
+    }
+});
+
+// Services endpoints
+app.post('/admin/services', requireAuth, async (req, res) => {
+    try {
+        const serviceData = req.body;
+        
+        if (!serviceData.name || !serviceData.description) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'חסרים שדות חובה' 
+            });
+        }
+        
+        const dataPath = path.join(__dirname, 'data', 'siteData.json');
+        const siteData = JSON.parse(await fs.readFile(dataPath, 'utf8'));
+        
+        if (!siteData.services) {
+            siteData.services = [];
+        }
+        
+        // Add new service
+        const newService = {
+            id: Date.now(),
+            name: serviceData.name,
+            description: serviceData.description,
+            icon: serviceData.icon || 'default',
+            active: true,
+            order: siteData.services.length,
+            ...serviceData
+        };
+        
+        siteData.services.push(newService);
+        
+        await fs.writeFile(dataPath, JSON.stringify(siteData, null, 2));
+        
+        res.json({ 
+            success: true, 
+            service: newService,
+            message: 'השירות נוסף בהצלחה' 
+        });
+    } catch (error) {
+        console.error('Error adding service:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'שגיאה בהוספת השירות' 
+        });
+    }
+});
+
+app.put('/admin/services/:id', requireAuth, async (req, res) => {
+    try {
+        const serviceId = parseInt(req.params.id);
+        const serviceData = req.body;
+        
+        const dataPath = path.join(__dirname, 'data', 'siteData.json');
+        const siteData = JSON.parse(await fs.readFile(dataPath, 'utf8'));
+        
+        const serviceIndex = siteData.services?.findIndex(s => s.id === serviceId);
+        if (serviceIndex === -1) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'השירות לא נמצא' 
+            });
+        }
+        
+        siteData.services[serviceIndex] = { ...siteData.services[serviceIndex], ...serviceData };
+        
+        await fs.writeFile(dataPath, JSON.stringify(siteData, null, 2));
+        
+        res.json({ 
+            success: true, 
+            service: siteData.services[serviceIndex],
+            message: 'השירות עודכן בהצלחה' 
+        });
+    } catch (error) {
+        console.error('Error updating service:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'שגיאה בעדכון השירות' 
+        });
+    }
+});
+
+app.delete('/admin/services/:id', requireAuth, async (req, res) => {
+    try {
+        const serviceId = parseInt(req.params.id);
+        
+        const dataPath = path.join(__dirname, 'data', 'siteData.json');
+        const siteData = JSON.parse(await fs.readFile(dataPath, 'utf8'));
+        
+        const originalLength = siteData.services?.length || 0;
+        siteData.services = siteData.services?.filter(s => s.id !== serviceId) || [];
+        
+        if (siteData.services.length === originalLength) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'השירות לא נמצא' 
+            });
+        }
+        
+        await fs.writeFile(dataPath, JSON.stringify(siteData, null, 2));
+        
+        res.json({ 
+            success: true, 
+            message: 'השירות נמחק בהצלחה' 
+        });
+    } catch (error) {
+        console.error('Error deleting service:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'שגיאה במחיקת השירות' 
+        });
+    }
+});
+
+// Projects endpoints
+app.delete('/admin/projects/:id', requireAuth, async (req, res) => {
+    try {
+        const projectId = parseInt(req.params.id);
+        
+        const dataPath = path.join(__dirname, 'data', 'siteData.json');
+        const siteData = JSON.parse(await fs.readFile(dataPath, 'utf8'));
+        
+        const originalLength = siteData.projects?.length || 0;
+        siteData.projects = siteData.projects?.filter(p => p.id !== projectId) || [];
+        
+        if (siteData.projects.length === originalLength) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'הפרויקט לא נמצא' 
+            });
+        }
+        
+        await fs.writeFile(dataPath, JSON.stringify(siteData, null, 2));
+        
+        res.json({ 
+            success: true, 
+            message: 'הפרויקט נמחק בהצלחה' 
+        });
+    } catch (error) {
+        console.error('Error deleting project:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'שגיאה במחיקת הפרויקט' 
+        });
+    }
+});
+
+// Contact submissions endpoints
+app.patch('/admin/submissions/:id', requireAuth, async (req, res) => {
+    try {
+        const submissionId = parseInt(req.params.id);
+        const { status } = req.body;
+        
+        if (!status || !['new', 'read', 'replied'].includes(status)) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'סטטוס לא תקין' 
+            });
+        }
+        
+        const dataPath = path.join(__dirname, 'data', 'siteData.json');
+        const siteData = JSON.parse(await fs.readFile(dataPath, 'utf8'));
+        
+        const submission = siteData.contact?.submissions?.find(s => s.id === submissionId);
+        if (!submission) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'הפנייה לא נמצאה' 
+            });
+        }
+        
+        submission.status = status;
+        
+        await fs.writeFile(dataPath, JSON.stringify(siteData, null, 2));
+        
+        res.json({ 
+            success: true, 
+            submission,
+            message: 'הסטטוס עודכן בהצלחה' 
+        });
+    } catch (error) {
+        console.error('Error updating submission:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'שגיאה בעדכון הסטטוס' 
+        });
+    }
+});
+
+app.delete('/admin/submissions/:id', requireAuth, async (req, res) => {
+    try {
+        const submissionId = parseInt(req.params.id);
+        
+        const dataPath = path.join(__dirname, 'data', 'siteData.json');
+        const siteData = JSON.parse(await fs.readFile(dataPath, 'utf8'));
+        
+        if (!siteData.contact?.submissions) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'הפנייה לא נמצאה' 
+            });
+        }
+        
+        const originalLength = siteData.contact.submissions.length;
+        siteData.contact.submissions = siteData.contact.submissions.filter(s => s.id !== submissionId);
+        
+        if (siteData.contact.submissions.length === originalLength) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'הפנייה לא נמצאה' 
+            });
+        }
+        
+        await fs.writeFile(dataPath, JSON.stringify(siteData, null, 2));
+        
+        res.json({ 
+            success: true, 
+            message: 'הפנייה נמחקה בהצלחה' 
+        });
+    } catch (error) {
+        console.error('Error deleting submission:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'שגיאה במחיקת הפנייה' 
+        });
+    }
+});
+
+// Settings endpoint
+app.post('/admin/settings', requireAuth, async (req, res) => {
+    try {
+        const settingsData = req.body;
+        
+        const dataPath = path.join(__dirname, 'data', 'siteData.json');
+        const siteData = JSON.parse(await fs.readFile(dataPath, 'utf8'));
+        
+        siteData.settings = { ...siteData.settings, ...settingsData };
+        
+        await fs.writeFile(dataPath, JSON.stringify(siteData, null, 2));
+        
+        res.json({ 
+            success: true, 
+            settings: siteData.settings,
+            message: 'ההגדרות נשמרו בהצלחה' 
+        });
+    } catch (error) {
+        console.error('Error saving settings:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'שגיאה בשמירת ההגדרות' 
+        });
+    }
 });
 
 // Image upload endpoint
@@ -240,7 +607,7 @@ app.post('/contact', (req, res) => {
         // Save back to file
         await fs.writeFile(dataPath, JSON.stringify(siteData, null, 2));
         
-        console.log('Contact form submission saved:', newSubmission);
+        // Contact form submission processed successfully
         
         res.json({ 
             success: true, 
@@ -314,9 +681,7 @@ app.post('/site-data', async (req, res) => {
             });
         }
         
-        // Log for debugging
-        console.log('Attempting to save data to:', dataPath);
-        console.log('Data size:', JSON.stringify(updatedData).length, 'bytes');
+        // Preparing to save data to file
         
         // Check if directory exists and is writable
         try {
@@ -337,7 +702,7 @@ app.post('/site-data', async (req, res) => {
         const savedData = await fs.readFile(dataPath, 'utf8');
         const parsedData = JSON.parse(savedData);
         
-        console.log('Data saved successfully');
+        // Data saved successfully to file
         
         res.json({ 
             success: true, 

@@ -7,16 +7,28 @@ async function editProject(projectId) {
 
 async function deleteProject(projectId) {
     if (confirm('האם אתה בטוח שברצונך למחוק פרויקט זה?')) {
-        const siteData = await getSiteData();
-        const projects = siteData.projects || [];
-        const filtered = projects.filter(p => p.id !== projectId);
-        updateSiteData('projects', filtered);
-        loadProjects();
-        showNotification('הפרויקט נמחק בהצלחה', 'success');
-        
-        // Update preview if open
-        if (window.websitePreview && window.websitePreview.isPreviewOpen) {
-            window.websitePreview.updatePreview();
+        try {
+            const response = await fetch(`/admin/projects/${projectId}`, {
+                method: 'DELETE',
+                headers: getAuthHeaders()
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                loadProjects();
+                showNotification(result.message, 'success');
+                
+                // Update preview if open
+                if (window.websitePreview && window.websitePreview.isPreviewOpen) {
+                    window.websitePreview.updatePreview();
+                }
+            } else {
+                showNotification(result.message || 'שגיאה במחיקת הפרויקט', 'error');
+            }
+        } catch (error) {
+            console.error('Error deleting project:', error);
+            showNotification('שגיאה במחיקת הפרויקט', 'error');
         }
     }
 }
@@ -28,12 +40,24 @@ function editService(serviceId) {
 
 async function deleteService(serviceId) {
     if (confirm('האם אתה בטוח שברצונך למחוק שירות זה?')) {
-        const siteData = await getSiteData();
-        const services = siteData.services || [];
-        const filtered = services.filter(s => s.id !== serviceId);
-        updateSiteData('services', filtered);
-        loadServices();
-        showNotification('השירות נמחק בהצלחה', 'success');
+        try {
+            const response = await fetch(`/admin/services/${serviceId}`, {
+                method: 'DELETE',
+                headers: getAuthHeaders()
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                loadServices();
+                showNotification(result.message, 'success');
+            } else {
+                showNotification(result.message || 'שגיאה במחיקת השירות', 'error');
+            }
+        } catch (error) {
+            console.error('Error deleting service:', error);
+            showNotification('שגיאה במחיקת השירות', 'error');
+        }
     }
 }
 
@@ -48,15 +72,58 @@ async function toggleService(serviceId) {
     }
 }
 
-// Check authentication
-function checkAuth() {
-    const isLoggedIn = localStorage.getItem('adminLoggedIn');
+// Session management
+let sessionId = localStorage.getItem('adminSessionId');
+
+function setSessionId(id) {
+    sessionId = id;
+    if (id) {
+        localStorage.setItem('adminSessionId', id);
+    } else {
+        localStorage.removeItem('adminSessionId');
+    }
+}
+
+function getAuthHeaders() {
+    return sessionId ? { 'x-session-id': sessionId } : {};
+}
+
+// Check authentication with server
+async function checkAuth() {
     const currentPage = window.location.pathname;
     
-    if (!isLoggedIn && !currentPage.includes('index.html')) {
+    if (!sessionId && !currentPage.includes('index.html')) {
         window.location.href = 'index.html';
-    } else if (isLoggedIn && currentPage.includes('index.html')) {
-        window.location.href = 'dashboard.html';
+        return;
+    }
+    
+    if (sessionId) {
+        try {
+            const response = await fetch('/admin/auth/verify', {
+                headers: getAuthHeaders()
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                if (result.authenticated && currentPage.includes('index.html')) {
+                    window.location.href = 'dashboard.html';
+                } else if (!result.authenticated && !currentPage.includes('index.html')) {
+                    setSessionId(null);
+                    window.location.href = 'index.html';
+                }
+            } else {
+                if (!currentPage.includes('index.html')) {
+                    setSessionId(null);
+                    window.location.href = 'index.html';
+                }
+            }
+        } catch (error) {
+            console.error('Auth check failed:', error);
+            if (!currentPage.includes('index.html')) {
+                setSessionId(null);
+                window.location.href = 'index.html';
+            }
+        }
     }
 }
 
@@ -77,29 +144,44 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Login handler
-function handleLogin(e) {
+async function handleLogin(e) {
     e.preventDefault();
     
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
-    const remember = document.getElementById('remember').checked;
     const errorMessage = document.getElementById('errorMessage');
+    const submitButton = e.target.querySelector('button[type="submit"]');
     
-    // Simple authentication (in real app, this would be server-side)
-    if (username === 'admin' && password === 'admin123') {
-        localStorage.setItem('adminLoggedIn', 'true');
-        if (remember) {
-            localStorage.setItem('rememberAdmin', 'true');
+    // Disable submit button during login
+    submitButton.disabled = true;
+    submitButton.textContent = 'מתחבר...';
+    
+    try {
+        const response = await fetch('/admin/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username, password })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            setSessionId(result.sessionId);
+            window.location.href = 'dashboard.html';
+        } else {
+            errorMessage.textContent = result.message || 'שגיאה בהתחברות';
+            errorMessage.classList.add('show');
         }
-        
-        // Set session timeout (30 minutes)
-        const timeout = new Date().getTime() + (30 * 60 * 1000);
-        localStorage.setItem('adminTimeout', timeout);
-        
-        window.location.href = 'dashboard.html';
-    } else {
-        errorMessage.textContent = 'שם משתמש או סיסמה שגויים';
+    } catch (error) {
+        console.error('Login error:', error);
+        errorMessage.textContent = 'שגיאה בהתחברות לשרת';
         errorMessage.classList.add('show');
+    } finally {
+        // Re-enable submit button
+        submitButton.disabled = false;
+        submitButton.textContent = 'התחבר';
     }
 }
 
@@ -186,10 +268,20 @@ function initializeUserMenu() {
 }
 
 // Logout function
-function logout() {
-    localStorage.removeItem('adminLoggedIn');
-    localStorage.removeItem('adminTimeout');
-    window.location.href = 'index.html';
+async function logout() {
+    try {
+        if (sessionId) {
+            await fetch('/admin/logout', {
+                method: 'POST',
+                headers: getAuthHeaders()
+            });
+        }
+    } catch (error) {
+        console.error('Logout error:', error);
+    } finally {
+        setSessionId(null);
+        window.location.href = 'index.html';
+    }
 }
 
 // Navigation handler
@@ -465,31 +557,45 @@ async function saveService(serviceId) {
         return;
     }
     
-    const siteData = await getSiteData();
-    const services = siteData.services || [];
-    
-    if (serviceId) {
-        // Edit existing
-        const index = services.findIndex(s => s.id === serviceId);
-        if (index !== -1) {
-            services[index] = { ...services[index], name, description };
+    try {
+        const serviceData = { name, description, icon: 'default' };
+        let response;
+        
+        if (serviceId) {
+            // Edit existing
+            response = await fetch(`/admin/services/${serviceId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...getAuthHeaders()
+                },
+                body: JSON.stringify(serviceData)
+            });
+        } else {
+            // Add new
+            response = await fetch('/admin/services', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...getAuthHeaders()
+                },
+                body: JSON.stringify(serviceData)
+            });
         }
-    } else {
-        // Add new
-        services.push({
-            id: Date.now(),
-            name,
-            description,
-            icon: 'default',
-            active: true,
-            order: services.length
-        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            loadServices();
+            closeModal('serviceModal');
+            showNotification(result.message, 'success');
+        } else {
+            showNotification(result.message || 'שגיאה בשמירת השירות', 'error');
+        }
+    } catch (error) {
+        console.error('Error saving service:', error);
+        showNotification('שגיאה בשמירת השירות', 'error');
     }
-    
-    updateSiteData('services', services);
-    loadServices();
-    closeModal('serviceModal');
-    showNotification('השירות נשמר בהצלחה', 'success');
 }
 
 
@@ -561,18 +667,8 @@ function initializeProjectsManager() {
 async function loadProjects() {
     const projectsGrid = document.getElementById('projectsGrid');
     
-    // Try to get fresh data from localStorage first, then server
-    let siteData;
-    try {
-        const localData = localStorage.getItem('siteData') || localStorage.getItem('digitalCraftData');
-        if (localData) {
-            siteData = JSON.parse(localData);
-        } else {
-            siteData = await getSiteData();
-        }
-    } catch (error) {
-        siteData = await getSiteData();
-    }
+    // Get data from server
+    const siteData = await getSiteData();
     
     const projects = siteData.projects || [];
     
@@ -793,22 +889,22 @@ function uploadImageToServer(file, callback) {
     // Show loading notification
     showNotification('מעלה תמונה ל-Cloudinary...', 'info');
     
-    console.log('Uploading image to Cloudinary...');
+    // Uploading image to Cloudinary
     
     fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
         method: 'POST',
         body: formData
     })
     .then(response => {
-        console.log('Cloudinary response status:', response.status);
+        // Processing Cloudinary response
         return response.json();
     })
     .then(data => {
-        console.log('Cloudinary response data:', data);
+        // Processing Cloudinary response data
         if (data.secure_url) {
             // Create transformed URL for 600x400 WebP
             const transformedUrl = data.secure_url.replace('/upload/', '/upload/w_600,h_400,c_fill,g_center,q_auto:best,f_webp/');
-            console.log('Image uploaded successfully:', transformedUrl);
+            // Image uploaded successfully to Cloudinary
             callback(transformedUrl);
             showNotification('התמונה הועלתה בהצלחה', 'success');
         } else {
@@ -875,7 +971,7 @@ async function saveProject(projectId) {
     const projects = siteData.projects || [];
     const preview = document.getElementById('projectImagePreview');
     const imageData = preview.dataset.imageData || null;
-    console.log('Saving project with image:', imageData);
+    // Preparing to save project with image data
     
     if (projectId) {
         // Edit existing
@@ -906,7 +1002,7 @@ async function saveProject(projectId) {
         });
     }
     
-    console.log('Projects before save:', projects);
+    // Saving projects data to server
     
     // Save the entire site data with updated projects
     siteData.projects = projects;
@@ -916,29 +1012,26 @@ async function saveProject(projectId) {
         const response = await fetch('/site-data', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                ...getAuthHeaders()
             },
             body: JSON.stringify(siteData)
         });
         
-        if (response.ok) {
-            console.log('Project saved to server successfully');
+        const result = await response.json();
+        
+        if (result.success) {
             showNotification('הפרויקט נשמר בהצלחה', 'success');
-            
-            // Update local storage first
-            localStorage.setItem('siteData', JSON.stringify(siteData));
-            localStorage.setItem('digitalCraftData', JSON.stringify(siteData));
             
             // Refresh the projects display immediately
             await loadProjects();
             closeModal('projectModal');
         } else {
-            console.error('Failed to save to server:', response.status);
-            showNotification('שגיאה בשמירת הפרויקט', 'error');
+            throw new Error(result.message || 'Failed to save to server');
         }
     } catch (error) {
         console.error('Error saving project:', error);
-        showNotification('שגיאה בשמירת הפרויקט', 'error');
+        showNotification('שגיאה בשמירת הפרויקט: ' + error.message, 'error');
     }
     
     // Force update main website
@@ -987,17 +1080,22 @@ function showNotification(message, type = 'success') {
 // Data management
 async function getSiteData() {
     try {
-        const response = await fetch('/site-data');
+        const response = await fetch('/site-data', {
+            headers: getAuthHeaders()
+        });
+        
         if (response.ok) {
             const data = await response.json();
             return data;
+        } else {
+            throw new Error(`Server responded with ${response.status}`);
         }
     } catch (error) {
-        console.log('Error fetching from server, using default data:', error);
+        console.error('Error fetching site data:', error);
+        showNotification('שגיאה בטעינת הנתונים מהשרת', 'error');
+        // Return default data as fallback
+        return getDefaultSiteData();
     }
-    
-    // Fallback to default data
-    return getDefaultSiteData();
 }
 
 async function updateSiteData(key, value) {
@@ -1006,64 +1104,42 @@ async function updateSiteData(key, value) {
         const data = await getSiteData();
         data[key] = value;
         
-        // Try to save to server via JSON file update
-        try {
-            // For now, save to localStorage and notify user
-            localStorage.setItem('siteData', JSON.stringify(data));
-            localStorage.setItem('digitalCraftData', JSON.stringify(data));
-            
-            // Try to write to the JSON file directly (this will work if server supports it)
-            const response = await fetch('/site-data', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data)
-            });
-            
-            if (response.ok) {
-                console.log('Data saved to server successfully');
-                return true;
-            } else {
-                const errorData = await response.text();
-                console.error('Server response:', response.status, errorData);
-                throw new Error(`Server save failed: ${response.status}`);
-            }
-        } catch (serverError) {
-            console.log('Server save failed, using localStorage:', serverError);
-            showNotification('הנתונים נשמרו זמנית - יש לעדכן את הקובץ ידנית', 'warning');
-            
-            // Show the user what to save
-            console.log('Current data to save to siteData.json:', JSON.stringify(data, null, 2));
-            
-            return false;
+        // Save to server
+        const response = await fetch('/site-data', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...getAuthHeaders()
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            return true;
+        } else {
+            throw new Error(result.message || 'Server save failed');
         }
     } catch (error) {
         console.error('Error saving data:', error);
-        showNotification('שגיאה בשמירת הנתונים', 'error');
+        showNotification('שגיאה בשמירת הנתונים: ' + error.message, 'error');
         return false;
     }
 }
 
 // Trigger main site update
 function triggerMainSiteUpdate() {
-    // Dispatch a storage event to notify the main site
-    window.dispatchEvent(new StorageEvent('storage', {
-        key: 'digitalCraftData',
-        newValue: localStorage.getItem('digitalCraftData'),
-        url: window.location.href
-    }));
-    
-    // Also try to update any open main site tabs
+    // Notify the main site to reload data from server
     try {
         if (window.opener && !window.opener.closed) {
             window.opener.postMessage({
                 type: 'dataUpdate',
-                data: localStorage.getItem('digitalCraftData')
+                source: 'admin'
             }, '*');
         }
     } catch (e) {
-        console.log('Could not communicate with parent window:', e);
+        // Could not communicate with parent window
     }
 }
 
@@ -1220,16 +1296,16 @@ function initializeContactManager() {
 
 // Load contact submissions
 async function loadContactSubmissions() {
-    console.log('Loading contact submissions...');
+    // Loading contact submissions from server
     const submissionsList = document.getElementById('submissionsList');
     if (!submissionsList) {
-        console.log('submissionsList element not found');
+        // Contact submissions list element not found
         return;
     }
     
     const siteData = await getSiteData();
     const submissions = siteData.contact?.submissions || [];
-    console.log('Found submissions:', submissions.length, submissions);
+    // Processing contact submissions data
     
     submissionsList.innerHTML = submissions.map(submission => `
         <div class="submission-item ${submission.status}" data-id="${submission.id}">
@@ -1273,26 +1349,50 @@ async function markAsReplied(submissionId) {
 }
 
 async function updateSubmissionStatus(submissionId, newStatus) {
-    const siteData = await getSiteData();
-    const submissions = siteData.contact?.submissions || [];
-    const submission = submissions.find(s => s.id === submissionId);
-    
-    if (submission) {
-        submission.status = newStatus;
-        await updateSiteData('contact', siteData.contact);
-        loadContactSubmissions();
-        showNotification('הסטטוס עודכן בהצלחה', 'success');
+    try {
+        const response = await fetch(`/admin/submissions/${submissionId}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                ...getAuthHeaders()
+            },
+            body: JSON.stringify({ status: newStatus })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            loadContactSubmissions();
+            showNotification(result.message, 'success');
+        } else {
+            showNotification(result.message || 'שגיאה בעדכון הסטטוס', 'error');
+        }
+    } catch (error) {
+        console.error('Error updating submission status:', error);
+        showNotification('שגיאה בעדכון הסטטוס', 'error');
     }
 }
 
 async function deleteSubmission(submissionId) {
     if (confirm('האם אתה בטוח שברצונך למחוק פנייה זו?')) {
-        const siteData = await getSiteData();
-        const submissions = siteData.contact?.submissions || [];
-        siteData.contact.submissions = submissions.filter(s => s.id !== submissionId);
-        await updateSiteData('contact', siteData.contact);
-        loadContactSubmissions();
-        showNotification('הפנייה נמחקה בהצלחה', 'success');
+        try {
+            const response = await fetch(`/admin/submissions/${submissionId}`, {
+                method: 'DELETE',
+                headers: getAuthHeaders()
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                loadContactSubmissions();
+                showNotification(result.message, 'success');
+            } else {
+                showNotification(result.message || 'שגיאה במחיקת הפנייה', 'error');
+            }
+        } catch (error) {
+            console.error('Error deleting submission:', error);
+            showNotification('שגיאה במחיקת הפנייה', 'error');
+        }
     }
 }
 
@@ -1446,37 +1546,56 @@ function updateMainSiteLogo(logoUrl) {
             }, '*');
         }
     } catch (e) {
-        console.log('Could not communicate with main site:', e);
+        // Could not communicate with main site
     }
 }
 
 async function saveSettingsData() {
-    const businessName = document.getElementById('businessName')?.value || 'CODE7';
-    const phone = document.getElementById('businessPhone')?.value || '';
-    const email = document.getElementById('businessEmail')?.value || '';
-    const facebook = document.getElementById('facebookUrl')?.value || '';
-    const instagram = document.getElementById('instagramUrl')?.value || '';
-    const linkedin = document.getElementById('linkedinUrl')?.value || '';
-    
-    const data = await getSiteData();
-    const settings = {
-        businessName,
-        phone,
-        email,
-        logo: data.settings?.logo || '',
-        social: {
-            facebook,
-            instagram,
-            linkedin
+    try {
+        const businessName = document.getElementById('businessName')?.value || 'CODE7';
+        const phone = document.getElementById('businessPhone')?.value || '';
+        const email = document.getElementById('businessEmail')?.value || '';
+        const facebook = document.getElementById('facebookUrl')?.value || '';
+        const instagram = document.getElementById('instagramUrl')?.value || '';
+        const linkedin = document.getElementById('linkedinUrl')?.value || '';
+        
+        const data = await getSiteData();
+        const settings = {
+            businessName,
+            phone,
+            email,
+            logo: data.settings?.logo || '',
+            social: {
+                facebook,
+                instagram,
+                linkedin
+            }
+        };
+        
+        const response = await fetch('/admin/settings', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...getAuthHeaders()
+            },
+            body: JSON.stringify(settings)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showNotification(result.message, 'success');
+            
+            // Update preview if open
+            if (window.websitePreview && window.websitePreview.isPreviewOpen) {
+                window.websitePreview.updatePreview();
+            }
+        } else {
+            showNotification(result.message || 'שגיאה בשמירת ההגדרות', 'error');
         }
-    };
-    
-    await updateSiteData('settings', settings);
-    showNotification('ההגדרות נשמרו בהצלחה', 'success');
-    
-    // Update preview if open
-    if (window.websitePreview && window.websitePreview.isPreviewOpen) {
-        window.websitePreview.updatePreview();
+    } catch (error) {
+        console.error('Error saving settings:', error);
+        showNotification('שגיאה בשמירת ההגדרות', 'error');
     }
 }
 

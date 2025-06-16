@@ -26,7 +26,7 @@ class WebsitePreview {
         this.previewFrame = document.getElementById('previewFrame');
         
         if (!this.previewPanel || !this.previewFrame) {
-            console.warn('Preview panel elements not found');
+            // Preview panel elements not found
             return;
         }
         
@@ -94,7 +94,7 @@ class WebsitePreview {
         if (this.options.autoUpdate) {
             // Monitor data changes in localStorage
             window.addEventListener('storage', (e) => {
-                if (e.key === 'digitalCraftData' && this.isPreviewOpen) {
+                if (e.key === 'code7Data' && this.isPreviewOpen) {
                     this.updatePreview();
                 }
             });
@@ -313,7 +313,7 @@ class WebsitePreview {
     getSettingsData() {
         // Extract general settings
         return {
-            businessName: document.getElementById('businessName')?.value || 'Digital Craft',
+            businessName: document.getElementById('businessName')?.value || 'CODE7',
             phone: document.getElementById('businessPhone')?.value || '055-2882839',
             email: document.getElementById('businessEmail')?.value || 'benatia.asaf@gmail.com'
         };
@@ -321,7 +321,7 @@ class WebsitePreview {
     
     syncDataToMainSite(data) {
         // Store data in localStorage for the main site to use
-        localStorage.setItem('digitalCraftData', JSON.stringify(data));
+        localStorage.setItem('code7Data', JSON.stringify(data));
         
         // If preview frame is accessible, inject data directly
         try {
@@ -423,7 +423,7 @@ class WebsitePreview {
         
         const a = document.createElement('a');
         a.href = url;
-        a.download = `digital-craft-backup-${new Date().toISOString().slice(0, 10)}.json`;
+        a.download = `code7-backup-${new Date().toISOString().slice(0, 10)}.json`;
         a.click();
         
         URL.revokeObjectURL(url);
