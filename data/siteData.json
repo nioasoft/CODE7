@@ -227,7 +227,40 @@
   ],
   "contact": {
     "fields": [],
-    "submissions": []
+    "submissions": [
+      {
+        "id": 1750060366320,
+        "name": "Asaf Benatia",
+        "email": "asaf@giggsi.co.il",
+        "phone": "0507778080",
+        "projectType": "ecommerce",
+        "budget": "5000-10000",
+        "timeline": "urgent",
+        "description": "בבב",
+        "timestamp": "2025-06-16T07:52:46.320Z",
+        "status": "contacted",
+        "price": null,
+        "deadline": null,
+        "notes": null,
+        "lastUpdated": "2025-06-16T08:16:44.814Z"
+      },
+      {
+        "id": 1750060112005,
+        "name": "Asaf Benatia",
+        "email": "asaf@giggsi.co.il",
+        "phone": "0507778080",
+        "projectType": "ecommerce",
+        "budget": "5000-10000",
+        "timeline": "urgent",
+        "description": "dd",
+        "timestamp": "2025-06-16T07:48:32.005Z",
+        "status": "new",
+        "price": 5000,
+        "deadline": null,
+        "notes": "קיבלת התעה",
+        "lastUpdated": "2025-06-16T08:21:12.611Z"
+      }
+    ]
   },
   "design": {
     "colors": {
@@ -244,7 +277,14 @@
       }
     },
     "layout": {
-      "sectionOrder": ["hero", "services", "projects", "testimonials", "contact", "faq"],
+      "sectionOrder": [
+        "hero",
+        "services",
+        "projects",
+        "testimonials",
+        "contact",
+        "faq"
+      ],
       "sectionVisibility": {
         "hero": true,
         "services": true,
@@ -264,7 +304,7 @@
     "businessName": "CODE7",
     "phone": "055-2882839",
     "email": "benatia.asaf@gmail.com",
-    "logo": "",
+    "logo": "https://res.cloudinary.com/dh1ompp1r/image/upload/h_80,c_scale,q_auto:best,f_auto/v1750062361/code7/logos/niuvm34dl6dnh7swqna0.png",
     "social": {
       "facebook": "",
       "instagram": "",

@@ -661,17 +661,85 @@
             </div>
             
             <div class="tab-content active" id="messages-tab">
-                <div class="messages-filter">
-                    <select class="form-control">
-                        <option>כל ההודעות</option>
-                        <option>חדשות</option>
-                        <option>נקראו</option>
-                        <option>בארכיון</option>
-                    </select>
-                    <input type="search" placeholder="חיפוש הודעות..." class="form-control">
+                <div class="kanban-controls">
+                    <div class="view-toggle">
+                        <button class="btn btn-primary active" onclick="switchToKanban()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="14" width="7" height="7"></rect>
+                                <rect x="3" y="14" width="7" height="7"></rect>
+                            </svg>
+                            לוח משימות
+                        </button>
+                        <button class="btn btn-secondary" onclick="switchToList()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="8" y1="6" x2="21" y2="6"></line>
+                                <line x1="8" y1="12" x2="21" y2="12"></line>
+                                <line x1="8" y1="18" x2="21" y2="18"></line>
+                                <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                                <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                                <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                            </svg>
+                            רשימה
+                        </button>
+                    </div>
+                    <input type="search" id="submissionsSearch" placeholder="חיפוש פניות..." class="form-control">
                 </div>
                 
-                <div class="messages-list" id="submissionsList">
+                <!-- Kanban Board View -->
+                <div class="kanban-board" id="kanbanBoard">
+                    <div class="kanban-column" data-status="new">
+                        <div class="column-header">
+                            <h4>פניות חדשות</h4>
+                            <span class="column-count" id="count-new">0</span>
+                        </div>
+                        <div class="column-cards" id="cards-new"></div>
+                    </div>
+                    
+                    <div class="kanban-column" data-status="contacted">
+                        <div class="column-header">
+                            <h4>יצירת קשר</h4>
+                            <span class="column-count" id="count-contacted">0</span>
+                        </div>
+                        <div class="column-cards" id="cards-contacted"></div>
+                    </div>
+                    
+                    <div class="kanban-column" data-status="quoted">
+                        <div class="column-header">
+                            <h4>הצעת מחיר</h4>
+                            <span class="column-count" id="count-quoted">0</span>
+                        </div>
+                        <div class="column-cards" id="cards-quoted"></div>
+                    </div>
+                    
+                    <div class="kanban-column" data-status="approved">
+                        <div class="column-header">
+                            <h4>אושר ללקוח</h4>
+                            <span class="column-count" id="count-approved">0</span>
+                        </div>
+                        <div class="column-cards" id="cards-approved"></div>
+                    </div>
+                    
+                    <div class="kanban-column" data-status="in_development">
+                        <div class="column-header">
+                            <h4>בפיתוח</h4>
+                            <span class="column-count" id="count-in_development">0</span>
+                        </div>
+                        <div class="column-cards" id="cards-in_development"></div>
+                    </div>
+                    
+                    <div class="kanban-column" data-status="completed">
+                        <div class="column-header">
+                            <h4>הושלם</h4>
+                            <span class="column-count" id="count-completed">0</span>
+                        </div>
+                        <div class="column-cards" id="cards-completed"></div>
+                    </div>
+                </div>
+                
+                <!-- List View (Original) -->
+                <div class="messages-list" id="submissionsList" style="display: none;">
                     <!-- Contact form submissions will be loaded dynamically -->
                 </div>
             </div>
@@ -900,6 +968,59 @@
         </div>
     </div>
 
+    <!-- Edit Submission Modal -->
+    <div class="modal" id="submissionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>עריכת פנייה</h3>
+                <span class="close" onclick="closeModal('submissionModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="submissionForm">
+                    <input type="hidden" id="submissionId">
+                    
+                    <div class="form-group">
+                        <label>סטטוס:</label>
+                        <select id="submissionStatus" class="form-control">
+                            <option value="new">חדש</option>
+                            <option value="contacted">יצירת קשר</option>
+                            <option value="quoted">הצעת מחיר נשלחה</option>
+                            <option value="approved">אושר ע"י לקוח</option>
+                            <option value="in_development">בפיתוח</option>
+                            <option value="completed">הושלם</option>
+                            <option value="cancelled">בוטל</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>מחיר מוצע (₪):</label>
+                        <input type="number" id="submissionPrice" class="form-control" placeholder="0">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>תאריך יעד:</label>
+                        <input type="date" id="submissionDeadline" class="form-control">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>הערות פנימיות:</label>
+                        <textarea id="submissionNotes" class="form-control" rows="4" placeholder="הערות לשימוש פנימי..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>קבצים מצורפים:</label>
+                        <input type="file" id="submissionFiles" class="form-control" multiple accept=".pdf,.doc,.docx,.png,.jpg,.jpeg">
+                        <div id="submissionFilesList" class="files-list"></div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('submissionModal')">ביטול</button>
+                <button type="button" class="btn btn-primary" onclick="saveSubmission()">שמור</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Notification System -->
     <div class="notifications" id="notifications"></div>
 
@@ -907,6 +1028,6 @@
     <script src="components/editor.js"></script>
     <script src="components/file-upload.js"></script>
     <script src="components/preview.js"></script>
-    <script src="data/admin-data.js"></script>
+    <!-- <script src="data/admin-data.js"></script> -->
 </body>
 </html>

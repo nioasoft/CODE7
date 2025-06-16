@@ -311,14 +311,68 @@ function showSection(sectionId) {
         targetSection.classList.add('active');
     }
     
+    // Save current section to localStorage
+    localStorage.setItem('adminCurrentSection', sectionId);
+    
+    // Update URL hash without triggering scroll
+    if (window.history.replaceState) {
+        window.history.replaceState({}, '', `#${sectionId}`);
+    } else {
+        window.location.hash = sectionId;
+    }
+    
+    // Load section-specific data
+    loadSectionData(sectionId);
+    
     // Close mobile sidebar
     document.getElementById('adminSidebar')?.classList.remove('show');
 }
 
+// Load section-specific data
+function loadSectionData(sectionId) {
+    switch(sectionId) {
+        case 'hero':
+            loadHero();
+            break;
+        case 'services':
+            loadServices();
+            break;
+        case 'projects':
+            loadProjects();
+            break;
+        case 'testimonials':
+            loadTestimonials();
+            break;
+        case 'contact':
+            initializeContactView();
+            break;
+        case 'faq':
+            loadFAQ();
+            break;
+        case 'colors':
+            loadColors();
+            break;
+        case 'typography':
+            loadTypography();
+            break;
+    }
+}
+
 // Initialize section navigation
 function initializeSectionNavigation() {
-    // Get initial section from hash or default to dashboard
-    const initialSection = window.location.hash.substring(1) || 'dashboard';
+    // Get section from: 1) hash, 2) localStorage, 3) default to dashboard
+    let initialSection = window.location.hash.substring(1);
+    
+    if (!initialSection) {
+        initialSection = localStorage.getItem('adminCurrentSection') || 'dashboard';
+    }
+    
+    // Validate that section exists
+    const sectionElement = document.getElementById(initialSection);
+    if (!sectionElement) {
+        initialSection = 'dashboard';
+    }
+    
     showSection(initialSection);
 }
 
@@ -601,7 +655,15 @@ async function saveService(serviceId) {
 
 // Close modal
 function closeModal(modalId) {
-    document.getElementById(modalId).classList.remove('show');
+    console.log('closeModal called with:', modalId);
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        console.log('Modal found, hiding it');
+        modal.style.display = 'none';
+        modal.classList.remove('show');
+    } else {
+        console.log('Modal not found!');
+    }
 }
 
 // Initialize sortable
@@ -1093,8 +1155,18 @@ async function getSiteData() {
     } catch (error) {
         console.error('Error fetching site data:', error);
         showNotification('שגיאה בטעינת הנתונים מהשרת', 'error');
-        // Return default data as fallback
-        return getDefaultSiteData();
+        // Return minimal fallback data
+        return {
+            hero: {},
+            services: [],
+            projects: [],
+            testimonials: [],
+            faq: [],
+            contact: { fields: [], submissions: [] },
+            design: {},
+            seo: {},
+            settings: {}
+        };
     }
 }
 
@@ -1294,19 +1366,143 @@ function initializeContactManager() {
     loadContactSubmissions();
 }
 
+function initializeContactView() {
+    // Restore saved view mode
+    const savedViewMode = localStorage.getItem('contactViewMode') || 'kanban';
+    
+    if (savedViewMode === 'list') {
+        document.getElementById('kanbanBoard').style.display = 'none';
+        document.getElementById('submissionsList').style.display = 'block';
+        
+        // Update button states
+        document.querySelectorAll('.view-toggle .btn').forEach(btn => btn.classList.remove('active'));
+        const listBtn = document.querySelector('.view-toggle .btn[onclick="switchToList()"]');
+        if (listBtn) listBtn.classList.add('active');
+    } else {
+        document.getElementById('kanbanBoard').style.display = 'flex';
+        document.getElementById('submissionsList').style.display = 'none';
+        
+        // Update button states
+        document.querySelectorAll('.view-toggle .btn').forEach(btn => btn.classList.remove('active'));
+        const kanbanBtn = document.querySelector('.view-toggle .btn[onclick="switchToKanban()"]');
+        if (kanbanBtn) kanbanBtn.classList.add('active');
+    }
+    
+    loadContactSubmissions();
+}
+
 // Load contact submissions
 async function loadContactSubmissions() {
-    // Loading contact submissions from server
-    const submissionsList = document.getElementById('submissionsList');
-    if (!submissionsList) {
-        // Contact submissions list element not found
-        return;
-    }
+    console.log('Loading contact submissions...');
     
     const siteData = await getSiteData();
     const submissions = siteData.contact?.submissions || [];
-    // Processing contact submissions data
+    console.log('Found submissions:', submissions.length, submissions);
     
+    // Check which view is active
+    const kanbanBoard = document.getElementById('kanbanBoard');
+    const submissionsList = document.getElementById('submissionsList');
+    
+    if (kanbanBoard && kanbanBoard.style.display !== 'none') {
+        loadKanbanView(submissions);
+    } else if (submissionsList) {
+        loadListView(submissions);
+    }
+}
+
+function loadKanbanView(submissions) {
+    // Clear all columns
+    const statuses = ['new', 'contacted', 'quoted', 'approved', 'in_development', 'completed'];
+    statuses.forEach(status => {
+        const cardsContainer = document.getElementById(`cards-${status}`);
+        const countElement = document.getElementById(`count-${status}`);
+        if (cardsContainer) cardsContainer.innerHTML = '';
+        if (countElement) countElement.textContent = '0';
+    });
+    
+    if (submissions.length === 0) {
+        document.getElementById('cards-new').innerHTML = '<div class="empty-column">אין פניות</div>';
+        return;
+    }
+    
+    // Group submissions by status
+    const submissionsByStatus = {};
+    statuses.forEach(status => submissionsByStatus[status] = []);
+    
+    submissions.forEach(submission => {
+        const status = submission.status || 'new';
+        if (submissionsByStatus[status]) {
+            submissionsByStatus[status].push(submission);
+        }
+    });
+    
+    // Populate each column
+    statuses.forEach(status => {
+        const statusSubmissions = submissionsByStatus[status];
+        const cardsContainer = document.getElementById(`cards-${status}`);
+        const countElement = document.getElementById(`count-${status}`);
+        
+        if (countElement) {
+            countElement.textContent = statusSubmissions.length;
+        }
+        
+        if (cardsContainer) {
+            cardsContainer.innerHTML = statusSubmissions.map(submission => createKanbanCard(submission)).join('');
+        }
+    });
+    
+    // Initialize drag and drop
+    initializeDragAndDrop();
+}
+
+function createKanbanCard(submission) {
+    const deadlineWarning = getDeadlineWarning(submission.deadline);
+    const projectTypeBadge = submission.projectType ? `<span class="project-type-badge project-type-${submission.projectType}">${getProjectTypeText(submission.projectType)}</span>` : '';
+    
+    return `
+        <div class="kanban-card" draggable="true" data-id="${submission.id}" onclick="editSubmission(${submission.id})">
+            <div class="card-header">
+                <h5 class="card-title">${submission.name}</h5>
+                <span class="card-date">${new Date(submission.timestamp).toLocaleDateString('he-IL')}</span>
+            </div>
+            <div class="card-details">
+                <div class="card-detail"><strong>אימייל:</strong> ${submission.email}</div>
+                <div class="card-detail"><strong>טלפון:</strong> ${submission.phone}</div>
+                ${submission.price ? `<div class="card-detail"><strong>מחיר:</strong> <span class="budget-badge">${submission.price.toLocaleString()} ₪</span></div>` : ''}
+                ${projectTypeBadge}
+                ${deadlineWarning}
+            </div>
+        </div>
+    `;
+}
+
+function getDeadlineWarning(deadline) {
+    if (!deadline) return '';
+    
+    const deadlineDate = new Date(deadline);
+    const today = new Date();
+    const diffTime = deadlineDate - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 0) {
+        return `<div class="deadline-warning">איחור: ${Math.abs(diffDays)} ימים</div>`;
+    } else if (diffDays <= 3) {
+        return `<div class="deadline-warning">נותרו ${diffDays} ימים</div>`;
+    } else if (diffDays <= 7) {
+        return `<div class="deadline-ok">נותרו ${diffDays} ימים</div>`;
+    }
+    return '';
+}
+
+function loadListView(submissions) {
+    const submissionsList = document.getElementById('submissionsList');
+    if (!submissionsList) return;
+    
+    if (submissions.length === 0) {
+        submissionsList.innerHTML = '<div class="no-submissions">אין פניות חדשות</div>';
+        return;
+    }
+
     submissionsList.innerHTML = submissions.map(submission => `
         <div class="submission-item ${submission.status}" data-id="${submission.id}">
             <div class="submission-header">
@@ -1317,14 +1513,26 @@ async function loadContactSubmissions() {
             <div class="submission-details">
                 <p><strong>אימייל:</strong> ${submission.email}</p>
                 <p><strong>טלפון:</strong> ${submission.phone}</p>
-                <p><strong>סוג פרויקט:</strong> ${submission.projectType || 'לא צוין'}</p>
-                <p><strong>תקציב:</strong> ${submission.budget || 'לא צוין'}</p>
-                <p><strong>לוח זמנים:</strong> ${submission.timeline || 'לא צוין'}</p>
+                <p><strong>סוג פרויקט:</strong> ${getProjectTypeText(submission.projectType)}</p>
+                <p><strong>תקציב:</strong> ${getBudgetText(submission.budget)}</p>
+                <p><strong>לוח זמנים:</strong> ${getTimelineText(submission.timeline)}</p>
                 <p><strong>תיאור:</strong> ${submission.description}</p>
+                ${submission.price ? `<p><strong>מחיר מוצע:</strong> ${submission.price.toLocaleString()} ₪</p>` : ''}
+                ${submission.deadline ? `<p><strong>תאריך יעד:</strong> ${new Date(submission.deadline).toLocaleDateString('he-IL')}</p>` : ''}
+                ${submission.notes ? `<p><strong>הערות:</strong> ${submission.notes}</p>` : ''}
+                ${submission.lastUpdated ? `<p class="last-updated"><strong>עודכן לאחרונה:</strong> ${new Date(submission.lastUpdated).toLocaleDateString('he-IL')} ${new Date(submission.lastUpdated).toLocaleTimeString('he-IL', {hour: '2-digit', minute: '2-digit'})}</p>` : ''}
             </div>
             <div class="submission-actions">
-                <button onclick="markAsRead(${submission.id})" class="btn btn-secondary">סמן כנקרא</button>
-                <button onclick="markAsReplied(${submission.id})" class="btn btn-primary">סמן כטופל</button>
+                <select onchange="updateSubmissionStatus(${submission.id}, this.value)" class="form-control" style="display: inline-block; width: auto; margin-left: 10px;">
+                    <option value="">עדכן סטטוס</option>
+                    <option value="contacted">יצירת קשר</option>
+                    <option value="quoted">הצעת מחיר נשלחה</option>
+                    <option value="approved">אושר ע"י לקוח</option>
+                    <option value="in_development">בפיתוח</option>
+                    <option value="completed">הושלם</option>
+                    <option value="cancelled">בוטל</option>
+                </select>
+                <button onclick="editSubmission(${submission.id})" class="btn btn-primary">ערוך</button>
                 <button onclick="deleteSubmission(${submission.id})" class="btn btn-danger">מחק</button>
             </div>
         </div>
@@ -1334,9 +1542,48 @@ async function loadContactSubmissions() {
 function getStatusText(status) {
     switch(status) {
         case 'new': return 'חדש';
+        case 'contacted': return 'יצירת קשר';
+        case 'quoted': return 'הצעת מחיר נשלחה';
+        case 'approved': return 'אושר ע"י לקוח';
+        case 'in_development': return 'בפיתוח';
+        case 'completed': return 'הושלם';
+        case 'cancelled': return 'בוטל';
         case 'read': return 'נקרא';
         case 'replied': return 'טופל';
         default: return status;
+    }
+}
+
+function getProjectTypeText(projectType) {
+    if (!projectType) return 'לא צוין';
+    switch(projectType) {
+        case 'website': return 'אתר תדמית';
+        case 'ecommerce': return 'חנות מקוונת';
+        case 'app': return 'אפליקציה מותאמת';
+        case 'system': return 'מערכת ניהול';
+        case 'maintenance': return 'שיפור אתר קיים';
+        default: return projectType;
+    }
+}
+
+function getBudgetText(budget) {
+    if (!budget) return 'לא צוין';
+    switch(budget) {
+        case '2000-5000': return '2,000-5,000 ₪';
+        case '5000-10000': return '5,000-10,000 ₪';
+        case '10000-20000': return '10,000-20,000 ₪';
+        case '20000+': return '20,000+ ₪';
+        default: return budget;
+    }
+}
+
+function getTimelineText(timeline) {
+    if (!timeline) return 'לא צוין';
+    switch(timeline) {
+        case 'urgent': return 'דחוף (עד שבועיים)';
+        case 'normal': return 'רגיל (חודש)';
+        case 'flexible': return 'גמיש (חודש-שלושה)';
+        default: return timeline;
     }
 }
 
@@ -1349,24 +1596,226 @@ async function markAsReplied(submissionId) {
 }
 
 async function updateSubmissionStatus(submissionId, newStatus) {
+    if (!newStatus) return;
+    
+    console.log('Updating submission:', submissionId, 'to status:', newStatus);
+    
     try {
+        const requestData = { 
+            status: newStatus,
+            lastUpdated: new Date().toISOString()
+        };
+        console.log('Request data:', requestData);
+        
         const response = await fetch(`/admin/submissions/${submissionId}`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
                 ...getAuthHeaders()
             },
-            body: JSON.stringify({ status: newStatus })
+            body: JSON.stringify(requestData)
         });
         
         const result = await response.json();
         
         if (result.success) {
             loadContactSubmissions();
-            showNotification(result.message, 'success');
+            showNotification(`הסטטוס עודכן ל: ${getStatusText(newStatus)}`, 'success');
         } else {
             showNotification(result.message || 'שגיאה בעדכון הסטטוס', 'error');
         }
+    } catch (error) {
+        console.error('Error updating submission status:', error);
+        showNotification('שגיאה בעדכון הסטטוס', 'error');
+    }
+}
+
+async function editSubmission(submissionId) {
+    try {
+        const siteData = await getSiteData();
+        const submission = siteData.contact?.submissions?.find(s => s.id == submissionId);
+        
+        if (!submission) {
+            showNotification('פנייה לא נמצאה', 'error');
+            return;
+        }
+
+        // Fill form with current data
+        document.getElementById('submissionId').value = submission.id;
+        document.getElementById('submissionStatus').value = submission.status || 'new';
+        document.getElementById('submissionPrice').value = submission.price || '';
+        document.getElementById('submissionDeadline').value = submission.deadline || '';
+        document.getElementById('submissionNotes').value = submission.notes || '';
+        
+        // Show files if any
+        displaySubmissionFiles(submission.files || []);
+        
+        // Show modal
+        document.getElementById('submissionModal').style.display = 'block';
+    } catch (error) {
+        console.error('Error loading submission:', error);
+        showNotification('שגיאה בטעינת הפנייה', 'error');
+    }
+}
+
+async function saveSubmission() {
+    console.log('saveSubmission called');
+    try {
+        const submissionId = document.getElementById('submissionId').value;
+        const status = document.getElementById('submissionStatus').value;
+        const price = document.getElementById('submissionPrice').value;
+        const deadline = document.getElementById('submissionDeadline').value;
+        const notes = document.getElementById('submissionNotes').value;
+        
+        console.log('Form data:', { submissionId, status, price, deadline, notes });
+        
+        const updateData = {
+            status,
+            price: price ? parseFloat(price) : null,
+            deadline: deadline || null,
+            notes: notes || null,
+            lastUpdated: new Date().toISOString()
+        };
+
+        const response = await fetch(`/admin/submissions/${submissionId}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                ...getAuthHeaders()
+            },
+            body: JSON.stringify(updateData)
+        });
+        
+        const result = await response.json();
+        
+        console.log('Response:', result);
+        
+        if (result.success) {
+            console.log('Success - closing modal');
+            closeModal('submissionModal');
+            loadContactSubmissions();
+            showNotification('הפנייה עודכנה בהצלחה', 'success');
+        } else {
+            console.log('Error in response:', result.message);
+            showNotification(result.message || 'שגיאה בעדכון הפנייה', 'error');
+        }
+    } catch (error) {
+        console.error('Error saving submission:', error);
+        showNotification('שגיאה בשמירת הפנייה', 'error');
+    }
+}
+
+function displaySubmissionFiles(files) {
+    const filesList = document.getElementById('submissionFilesList');
+    if (!files || files.length === 0) {
+        filesList.innerHTML = '<p class="no-files">אין קבצים מצורפים</p>';
+        return;
+    }
+    
+    filesList.innerHTML = files.map(file => `
+        <div class="file-item">
+            <span class="file-name">${file.name}</span>
+            <span class="file-size">(${formatFileSize(file.size)})</span>
+            <button type="button" class="btn btn-sm btn-danger" onclick="removeSubmissionFile('${file.id}')">מחק</button>
+        </div>
+    `).join('');
+}
+
+function formatFileSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return Math.round(bytes / 1024) + ' KB';
+    return Math.round(bytes / (1024 * 1024)) + ' MB';
+}
+
+// View switching functions
+function switchToKanban() {
+    document.getElementById('kanbanBoard').style.display = 'flex';
+    document.getElementById('submissionsList').style.display = 'none';
+    
+    // Update button states
+    document.querySelectorAll('.view-toggle .btn').forEach(btn => btn.classList.remove('active'));
+    event.target.closest('.btn').classList.add('active');
+    
+    // Save view preference
+    localStorage.setItem('contactViewMode', 'kanban');
+    
+    loadContactSubmissions();
+}
+
+function switchToList() {
+    document.getElementById('kanbanBoard').style.display = 'none';
+    document.getElementById('submissionsList').style.display = 'block';
+    
+    // Update button states
+    document.querySelectorAll('.view-toggle .btn').forEach(btn => btn.classList.remove('active'));
+    event.target.closest('.btn').classList.add('active');
+    
+    // Save view preference
+    localStorage.setItem('contactViewMode', 'list');
+    
+    loadContactSubmissions();
+}
+
+// Drag and Drop functionality
+function initializeDragAndDrop() {
+    const cards = document.querySelectorAll('.kanban-card');
+    const columns = document.querySelectorAll('.column-cards');
+    
+    cards.forEach(card => {
+        card.addEventListener('dragstart', handleDragStart);
+        card.addEventListener('dragend', handleDragEnd);
+    });
+    
+    columns.forEach(column => {
+        column.addEventListener('dragover', handleDragOver);
+        column.addEventListener('dragenter', handleDragEnter);
+        column.addEventListener('dragleave', handleDragLeave);
+        column.addEventListener('drop', handleDrop);
+    });
+}
+
+let draggedElement = null;
+
+function handleDragStart(e) {
+    draggedElement = e.target;
+    e.target.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', e.target.outerHTML);
+}
+
+function handleDragEnd(e) {
+    e.target.classList.remove('dragging');
+    draggedElement = null;
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+}
+
+function handleDragEnter(e) {
+    e.target.classList.add('drag-over');
+}
+
+function handleDragLeave(e) {
+    e.target.classList.remove('drag-over');
+}
+
+async function handleDrop(e) {
+    e.preventDefault();
+    e.target.classList.remove('drag-over');
+    
+    if (!draggedElement) return;
+    
+    const targetColumn = e.target.closest('.kanban-column');
+    const newStatus = targetColumn.dataset.status;
+    const submissionId = draggedElement.dataset.id;
+    
+    // Update status on server
+    try {
+        await updateSubmissionStatus(submissionId, newStatus);
+        // Reload kanban to reflect changes
+        loadContactSubmissions();
     } catch (error) {
         console.error('Error updating submission status:', error);
         showNotification('שגיאה בעדכון הסטטוס', 'error');
@@ -1611,3 +2060,9 @@ window.saveProject = saveProject;
 window.markAsRead = markAsRead;
 window.markAsReplied = markAsReplied;
 window.deleteSubmission = deleteSubmission;
+window.editSubmission = editSubmission;
+window.saveSubmission = saveSubmission;
+window.updateSubmissionStatus = updateSubmissionStatus;
+window.switchToKanban = switchToKanban;
+window.switchToList = switchToList;
+

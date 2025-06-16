@@ -382,9 +382,15 @@ app.delete('/admin/projects/:id', requireAuth, async (req, res) => {
 app.patch('/admin/submissions/:id', requireAuth, async (req, res) => {
     try {
         const submissionId = parseInt(req.params.id);
-        const { status } = req.body;
+        const { status, price, deadline, notes, lastUpdated } = req.body;
         
-        if (!status || !['new', 'read', 'replied'].includes(status)) {
+        console.log('PATCH /admin/submissions:', submissionId);
+        console.log('Request body:', req.body);
+        console.log('Status received:', status);
+        
+        const validStatuses = ['new', 'contacted', 'quoted', 'approved', 'in_development', 'completed', 'cancelled', 'read', 'replied'];
+        if (status && !validStatuses.includes(status)) {
+            console.log('Invalid status:', status, 'Valid statuses:', validStatuses);
             return res.status(400).json({ 
                 success: false, 
                 message: 'סטטוס לא תקין' 
@@ -402,20 +408,25 @@ app.patch('/admin/submissions/:id', requireAuth, async (req, res) => {
             });
         }
         
-        submission.status = status;
+        // Update fields if provided
+        if (status) submission.status = status;
+        if (price !== undefined) submission.price = price;
+        if (deadline !== undefined) submission.deadline = deadline;
+        if (notes !== undefined) submission.notes = notes;
+        if (lastUpdated) submission.lastUpdated = lastUpdated;
         
         await fs.writeFile(dataPath, JSON.stringify(siteData, null, 2));
         
         res.json({ 
             success: true, 
             submission,
-            message: 'הסטטוס עודכן בהצלחה' 
+            message: 'הפנייה עודכנה בהצלחה' 
         });
     } catch (error) {
         console.error('Error updating submission:', error);
         res.status(500).json({ 
             success: false, 
-            message: 'שגיאה בעדכון הסטטוס' 
+            message: 'שגיאה בעדכון הפנייה' 
         });
     }
 });
@@ -615,9 +626,9 @@ app.post('/contact', async (req, res) => {
         });
     } catch (error) {
         console.error('Error saving contact submission:', error);
-        res.json({ 
-            success: true, 
-            message: 'תודה על פנייתך! נחזור אליך בהקדם.' 
+        res.status(500).json({ 
+            success: false, 
+            message: 'שגיאה בשמירת הפנייה. נסה שוב מאוחר יותר.' 
         });
     }
 });

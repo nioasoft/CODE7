@@ -1,5 +1,233 @@
 /* Admin Panel Styles */
 
+/* Kanban Board Styles */
+.kanban-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.view-toggle {
+    display: flex;
+    gap: 5px;
+}
+
+.view-toggle .btn {
+    padding: 8px 16px;
+    border: 1px solid #ddd;
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.view-toggle .btn.active {
+    background: var(--admin-primary);
+    color: white;
+    border-color: var(--admin-primary);
+}
+
+.view-toggle .btn:hover:not(.active) {
+    background: #f0f0f0;
+}
+
+.view-toggle .btn svg {
+    margin-left: 5px;
+    vertical-align: middle;
+}
+
+.kanban-board {
+    display: flex;
+    gap: 20px;
+    overflow-x: auto;
+    padding: 20px 0;
+    min-height: 600px;
+}
+
+.kanban-column {
+    min-width: 280px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.column-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.column-header h4 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--admin-dark);
+}
+
+.column-count {
+    background: var(--admin-primary);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.column-cards {
+    min-height: 500px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.kanban-card {
+    background: white;
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid #e9ecef;
+}
+
+.kanban-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transform: translateY(-2px);
+}
+
+.kanban-card.dragging {
+    opacity: 0.5;
+    transform: rotate(3deg);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.card-title {
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--admin-dark);
+    margin: 0;
+}
+
+.card-date {
+    font-size: 12px;
+    color: #666;
+    background: #f0f0f0;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.card-details {
+    margin-bottom: 12px;
+}
+
+.card-detail {
+    font-size: 13px;
+    margin: 4px 0;
+    color: #555;
+}
+
+.card-detail strong {
+    color: var(--admin-dark);
+}
+
+.card-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.card-actions .btn {
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.project-type-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    margin-top: 4px;
+}
+
+.project-type-website { background: #e3f2fd; color: #1976d2; }
+.project-type-ecommerce { background: #f3e5f5; color: #7b1fa2; }
+.project-type-app { background: #e8f5e8; color: #388e3c; }
+.project-type-system { background: #fff3e0; color: #f57c00; }
+.project-type-maintenance { background: #fce4ec; color: #c2185b; }
+
+.budget-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    background: #fff9c4;
+    color: #827717;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.deadline-warning {
+    background: #ffebee;
+    color: #c62828;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    margin-top: 8px;
+}
+
+.deadline-ok {
+    background: #e8f5e8;
+    color: #2e7d32;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    margin-top: 8px;
+}
+
+/* Drop zones */
+.column-cards.drag-over {
+    background: rgba(0, 122, 255, 0.1);
+    border: 2px dashed var(--admin-primary);
+    border-radius: 8px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .kanban-board {
+        flex-direction: column;
+        gap: 16px;
+    }
+    
+    .kanban-column {
+        min-width: 100%;
+    }
+    
+    .kanban-controls {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .view-toggle {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
 /* CSS Variables */
 :root {
     --admin-primary: #007AFF;
