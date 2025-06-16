@@ -2026,8 +2026,8 @@ function uploadLogoImage(file) {
     .then(response => response.json())
     .then(async (data) => {
         if (data.secure_url) {
-            // Create transformed URL for logo (max height 80px)
-            const transformedUrl = data.secure_url.replace('/upload/', '/upload/h_80,c_scale,q_auto:best,f_auto/');
+            // Create transformed URL for logo (max height 120px for better visibility)
+            const transformedUrl = data.secure_url.replace('/upload/', '/upload/h_120,c_scale,q_auto:best,f_auto/');
             
             // Update settings with logo URL
             const siteData = await getSiteData();
