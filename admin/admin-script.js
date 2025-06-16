@@ -2254,34 +2254,303 @@ window.switchToKanban = switchToKanban;
 window.switchToList = switchToList;
 
 // Testimonials management functions
-function editTestimonial(testimonialId) {
-    console.log('Edit testimonial:', testimonialId);
-    showNotification('עריכת המלצות - תכונה בפיתוח', 'info');
+async function editTestimonial(testimonialId) {
+    const siteData = await getSiteData();
+    const testimonials = siteData.testimonials || [];
+    const testimonial = testimonials.find(t => t.id === testimonialId);
+    
+    if (testimonial) {
+        openTestimonialModal(testimonial);
+    }
 }
 
-function deleteTestimonial(testimonialId) {
+async function deleteTestimonial(testimonialId) {
     if (confirm('האם אתה בטוח שברצונך למחוק המלצה זו?')) {
-        console.log('Delete testimonial:', testimonialId);
-        showNotification('מחיקת המלצות - תכונה בפיתוח', 'info');
+        try {
+            const siteData = await getSiteData();
+            const testimonials = siteData.testimonials || [];
+            const updatedTestimonials = testimonials.filter(t => t.id !== testimonialId);
+            
+            siteData.testimonials = updatedTestimonials;
+            
+            const response = await fetch('/site-data', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...getAuthHeaders()
+                },
+                body: JSON.stringify(siteData)
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                showNotification('המלצה נמחקה בהצלחה', 'success');
+                loadTestimonials();
+                triggerMainSiteUpdate();
+            } else {
+                showNotification('שגיאה במחיקת ההמלצה', 'error');
+            }
+        } catch (error) {
+            console.error('Error deleting testimonial:', error);
+            showNotification('שגיאה במחיקת ההמלצה', 'error');
+        }
+    }
+}
+
+function openTestimonialModal(testimonial = null) {
+    const modal = document.getElementById('testimonialModal');
+    const modalTitle = document.getElementById('testimonialModalTitle');
+    const form = document.getElementById('testimonialForm');
+    
+    if (testimonial) {
+        modalTitle.textContent = 'ערוך המלצה';
+        document.getElementById('testimonialName').value = testimonial.name || '';
+        document.getElementById('testimonialRole').value = testimonial.role || '';
+        document.getElementById('testimonialCompany').value = testimonial.company || '';
+        document.getElementById('testimonialText').value = testimonial.text || '';
+        document.getElementById('testimonialRating').value = testimonial.rating || 5;
+        
+        // Handle image if exists
+        const imagePreview = document.getElementById('testimonialImagePreview');
+        if (testimonial.image) {
+            imagePreview.innerHTML = `<img src="${testimonial.image}" style="max-width: 150px; max-height: 150px; object-fit: cover; border-radius: 8px;">`;
+            imagePreview.dataset.imageData = testimonial.image;
+        } else {
+            imagePreview.innerHTML = '';
+            delete imagePreview.dataset.imageData;
+        }
+    } else {
+        modalTitle.textContent = 'הוסף המלצה';
+        form.reset();
+        const imagePreview = document.getElementById('testimonialImagePreview');
+        imagePreview.innerHTML = '';
+        delete imagePreview.dataset.imageData;
+    }
+    
+    modal.classList.add('show');
+    modal.dataset.testimonialId = testimonial ? testimonial.id : '';
+}
+
+async function saveTestimonial() {
+    const modal = document.getElementById('testimonialModal');
+    const testimonialId = modal.dataset.testimonialId;
+    const isEdit = !!testimonialId;
+    
+    const name = document.getElementById('testimonialName').value;
+    const role = document.getElementById('testimonialRole').value;
+    const company = document.getElementById('testimonialCompany').value;
+    const text = document.getElementById('testimonialText').value;
+    const rating = parseInt(document.getElementById('testimonialRating').value);
+    
+    if (!name || !role || !text) {
+        showNotification('נא למלא את כל השדות הנדרשים', 'error');
+        return;
+    }
+    
+    try {
+        const siteData = await getSiteData();
+        const testimonials = siteData.testimonials || [];
+        const imagePreview = document.getElementById('testimonialImagePreview');
+        const imageData = imagePreview.dataset.imageData || '';
+        
+        const testimonialData = {
+            name,
+            role,
+            company,
+            text,
+            rating,
+            image: imageData
+        };
+        
+        if (isEdit) {
+            const index = testimonials.findIndex(t => t.id === testimonialId);
+            if (index !== -1) {
+                testimonials[index] = { ...testimonials[index], ...testimonialData };
+            }
+        } else {
+            testimonials.push({
+                id: 'testimonial' + Date.now(),
+                ...testimonialData
+            });
+        }
+        
+        siteData.testimonials = testimonials;
+        
+        const response = await fetch('/site-data', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...getAuthHeaders()
+            },
+            body: JSON.stringify(siteData)
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            showNotification(isEdit ? 'המלצה עודכנה בהצלחה' : 'המלצה נוספה בהצלחה', 'success');
+            closeModal('testimonialModal');
+            loadTestimonials();
+            triggerMainSiteUpdate();
+        } else {
+            showNotification('שגיאה בשמירת ההמלצה', 'error');
+        }
+    } catch (error) {
+        console.error('Error saving testimonial:', error);
+        showNotification('שגיאה בשמירת ההמלצה', 'error');
     }
 }
 
 // FAQ management functions
-function editFAQ(faqId) {
-    console.log('Edit FAQ:', faqId);
-    showNotification('עריכת שאלות נפוצות - תכונה בפיתוח', 'info');
-}
-
-function deleteFAQ(faqId) {
-    if (confirm('האם אתה בטוח שברצונך למחוק שאלה זו?')) {
-        console.log('Delete FAQ:', faqId);
-        showNotification('מחיקת שאלות נפוצות - תכונה בפיתוח', 'info');
+async function editFAQ(faqId) {
+    const siteData = await getSiteData();
+    const faq = siteData.faq || [];
+    const faqItem = faq.find(f => f.id === faqId);
+    
+    if (faqItem) {
+        openFAQModal(faqItem);
     }
 }
+
+async function deleteFAQ(faqId) {
+    if (confirm('האם אתה בטוח שברצונך למחוק שאלה זו?')) {
+        try {
+            const siteData = await getSiteData();
+            const faq = siteData.faq || [];
+            const updatedFAQ = faq.filter(f => f.id !== faqId);
+            
+            siteData.faq = updatedFAQ;
+            
+            const response = await fetch('/site-data', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...getAuthHeaders()
+                },
+                body: JSON.stringify(siteData)
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                showNotification('שאלה נמחקה בהצלחה', 'success');
+                loadFAQ();
+                triggerMainSiteUpdate();
+            } else {
+                showNotification('שגיאה במחיקת השאלה', 'error');
+            }
+        } catch (error) {
+            console.error('Error deleting FAQ:', error);
+            showNotification('שגיאה במחיקת השאלה', 'error');
+        }
+    }
+}
+
+function openFAQModal(faqItem = null) {
+    const modal = document.getElementById('faqModal');
+    const modalTitle = document.getElementById('faqModalTitle');
+    const form = document.getElementById('faqForm');
+    
+    if (faqItem) {
+        modalTitle.textContent = 'ערוך שאלה נפוצה';
+        document.getElementById('faqQuestion').value = faqItem.question || '';
+        document.getElementById('faqAnswer').value = faqItem.answer || '';
+    } else {
+        modalTitle.textContent = 'הוסף שאלה נפוצה';
+        form.reset();
+    }
+    
+    modal.classList.add('show');
+    modal.dataset.faqId = faqItem ? faqItem.id : '';
+}
+
+async function saveFAQ() {
+    const modal = document.getElementById('faqModal');
+    const faqId = modal.dataset.faqId;
+    const isEdit = !!faqId;
+    
+    const question = document.getElementById('faqQuestion').value;
+    const answer = document.getElementById('faqAnswer').value;
+    
+    if (!question || !answer) {
+        showNotification('נא למלא את כל השדות הנדרשים', 'error');
+        return;
+    }
+    
+    try {
+        const siteData = await getSiteData();
+        const faq = siteData.faq || [];
+        
+        const faqData = { question, answer };
+        
+        if (isEdit) {
+            const index = faq.findIndex(f => f.id === faqId);
+            if (index !== -1) {
+                faq[index] = { ...faq[index], ...faqData };
+            }
+        } else {
+            faq.push({
+                id: 'faq' + Date.now(),
+                ...faqData
+            });
+        }
+        
+        siteData.faq = faq;
+        
+        const response = await fetch('/site-data', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...getAuthHeaders()
+            },
+            body: JSON.stringify(siteData)
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            showNotification(isEdit ? 'שאלה עודכנה בהצלחה' : 'שאלה נוספה בהצלחה', 'success');
+            closeModal('faqModal');
+            loadFAQ();
+            triggerMainSiteUpdate();
+        } else {
+            showNotification('שגיאה בשמירת השאלה', 'error');
+        }
+    } catch (error) {
+        console.error('Error saving FAQ:', error);
+        showNotification('שגיאה בשמירת השאלה', 'error');
+    }
+}
+
+// Initialize testimonial and FAQ buttons
+document.addEventListener('DOMContentLoaded', function() {
+    // Add testimonial button
+    const addTestimonialBtn = document.getElementById('addTestimonial');
+    if (addTestimonialBtn) {
+        addTestimonialBtn.addEventListener('click', () => openTestimonialModal());
+    }
+    
+    // Add FAQ button
+    const addFaqBtn = document.getElementById('addFaq');
+    if (addFaqBtn) {
+        addFaqBtn.addEventListener('click', () => openFAQModal());
+    }
+    
+    // Modal close buttons
+    document.querySelectorAll('.modal .modal-close').forEach(closeBtn => {
+        closeBtn.addEventListener('click', function() {
+            const modal = this.closest('.modal');
+            if (modal) {
+                closeModal(modal.id);
+            }
+        });
+    });
+});
 
 // Export new functions to window
 window.editTestimonial = editTestimonial;
 window.deleteTestimonial = deleteTestimonial;
 window.editFAQ = editFAQ;
 window.deleteFAQ = deleteFAQ;
+window.openTestimonialModal = openTestimonialModal;
+window.openFAQModal = openFAQModal;
+window.saveTestimonial = saveTestimonial;
+window.saveFAQ = saveFAQ;
 

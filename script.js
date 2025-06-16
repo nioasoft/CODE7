@@ -400,6 +400,16 @@ function updatePageContent(data) {
             }
         });
     }
+    
+    // Update testimonials
+    if (data.testimonials) {
+        updateTestimonials(data.testimonials);
+    }
+    
+    // Update FAQ
+    if (data.faq) {
+        updateFAQ(data.faq);
+    }
 }
 
 // Function to update from admin panel
@@ -464,6 +474,70 @@ function updateSiteLogo(logoUrl) {
             siteTitle.style.display = 'block';
         }
     }
+}
+
+// Function to update testimonials dynamically
+function updateTestimonials(testimonials) {
+    const testimonialsGrid = document.querySelector('.testimonials-grid');
+    if (!testimonialsGrid) return;
+    
+    testimonialsGrid.innerHTML = testimonials.map(testimonial => `
+        <div class="testimonial-card">
+            <div class="testimonial-content">
+                <p>"${testimonial.text}"</p>
+                <div class="testimonial-author">
+                    <strong>${testimonial.name}</strong>
+                    <span>${testimonial.role}${testimonial.company ? ` - ${testimonial.company}` : ''}</span>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Function to update FAQ dynamically
+function updateFAQ(faq) {
+    const faqList = document.querySelector('.faq-list');
+    if (!faqList) return;
+    
+    faqList.innerHTML = faq.map(item => `
+        <div class="faq-item">
+            <button class="faq-question">
+                <span>${item.question}</span>
+                <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+            </button>
+            <div class="faq-answer">
+                <p>${item.answer}</p>
+            </div>
+        </div>
+    `).join('');
+    
+    // Re-initialize FAQ accordion functionality
+    initializeFAQAccordion();
+}
+
+// Function to initialize FAQ accordion
+function initializeFAQAccordion() {
+    const faqItems = document.querySelectorAll('.faq-item');
+    
+    faqItems.forEach(item => {
+        const question = item.querySelector('.faq-question');
+        
+        question.addEventListener('click', () => {
+            const isActive = item.classList.contains('active');
+            
+            // Close all FAQ items
+            faqItems.forEach(faq => {
+                faq.classList.remove('active');
+            });
+            
+            // Open clicked item if it wasn't active
+            if (!isActive) {
+                item.classList.add('active');
+            }
+        });
+    });
 }
 
 // Make updateFromAdmin available globally for iframe communication
