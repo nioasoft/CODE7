@@ -835,8 +835,19 @@
                     <h3>לוגו האתר</h3>
                     <div class="form-group">
                         <label for="logoUpload">העלאת לוגו</label>
+                        <div class="upload-guidelines">
+                            <div class="aspect-ratio-info">
+                                <strong>פרופורציה מועדפת: 2:1</strong>
+                                <span class="example">(לדוגמה: 200x100, 400x200 פיקסלים)</span>
+                            </div>
+                            <div class="technical-specs">
+                                <span>• רזולוציה גבוהה • רקע שקוף (PNG) • עד 2MB</span>
+                            </div>
+                        </div>
                         <input type="file" id="logoUpload" class="form-control" accept="image/*">
-                        <small class="form-text">מומלץ: רזולוציה גבוהה, רקע שקוף (PNG), עד 2MB</small>
+                        <button type="button" class="btn btn-secondary btn-sm image-editor-btn" data-target="logoUpload" style="margin-top: 5px; display: none;">
+                            ✂️ ערוך תמונה
+                        </button>
                     </div>
                     <div class="form-group">
                         <label>תצוגה מקדימה</label>
@@ -1021,13 +1032,55 @@
         </div>
     </div>
 
+    <!-- Image Editor Modal -->
+    <div class="image-editor-modal" id="imageEditorModal">
+        <div class="image-editor-container">
+            <div class="image-editor-header">
+                <h3>עריכת תמונה</h3>
+                <button class="image-editor-close" onclick="closeImageEditor()">&times;</button>
+            </div>
+            
+            <div class="crop-container">
+                <img id="cropImage" style="max-width: 100%; display: block;">
+            </div>
+            
+            <div class="crop-controls">
+                <label style="font-weight: 600; margin-left: 10px;">פרופורציה:</label>
+                <div class="aspect-ratio-selector">
+                    <button type="button" class="aspect-ratio-btn" data-ratio="free">חופשי</button>
+                    <button type="button" class="aspect-ratio-btn" data-ratio="1:1">1:1</button>
+                    <button type="button" class="aspect-ratio-btn" data-ratio="2:1">2:1</button>
+                    <button type="button" class="aspect-ratio-btn" data-ratio="3:2">3:2</button>
+                    <button type="button" class="aspect-ratio-btn" data-ratio="16:9">16:9</button>
+                </div>
+            </div>
+            
+            <div class="crop-preview">
+                <div class="crop-preview-title">תצוגה מקדימה</div>
+                <div class="crop-preview-container">
+                    <canvas id="cropPreviewCanvas" class="crop-preview-image"></canvas>
+                </div>
+            </div>
+            
+            <div class="editor-actions">
+                <button type="button" class="btn btn-editor-cancel" onclick="closeImageEditor()">ביטול</button>
+                <button type="button" class="btn btn-editor-apply" onclick="applyCrop()">החל קרופ</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Notification System -->
     <div class="notifications" id="notifications"></div>
 
+    <!-- Cropper.js CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+    
     <script src="admin-script.js"></script>
     <script src="components/editor.js"></script>
     <script src="components/file-upload.js"></script>
     <script src="components/preview.js"></script>
+    <script src="components/image-editor.js"></script>
     <!-- <script src="data/admin-data.js"></script> -->
 </body>
 </html>

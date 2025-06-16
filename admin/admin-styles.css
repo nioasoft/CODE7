@@ -228,6 +228,210 @@
     }
 }
 
+/* Upload Guidelines Styles */
+.upload-guidelines {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 10px;
+    font-size: 13px;
+}
+
+.aspect-ratio-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.aspect-ratio-info strong {
+    color: var(--admin-primary);
+    font-weight: 600;
+}
+
+.aspect-ratio-info .example {
+    color: #666;
+    font-style: italic;
+}
+
+.technical-specs {
+    color: #666;
+    font-size: 12px;
+}
+
+.technical-specs span {
+    display: inline-block;
+}
+
+.image-editor-btn {
+    background: #28a745;
+    border-color: #28a745;
+    color: white;
+    font-size: 12px;
+    padding: 4px 12px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.image-editor-btn:hover {
+    background: #218838;
+    border-color: #1e7e34;
+    color: white;
+}
+
+.image-editor-btn:disabled {
+    background: #6c757d;
+    border-color: #6c757d;
+}
+
+/* Image Editor Modal */
+.image-editor-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: none;
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+}
+
+.image-editor-modal.active {
+    display: flex;
+}
+
+.image-editor-container {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    max-width: 90vw;
+    max-height: 90vh;
+    overflow: auto;
+    position: relative;
+}
+
+.image-editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.image-editor-header h3 {
+    margin: 0;
+    color: var(--admin-dark);
+}
+
+.image-editor-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.image-editor-close:hover {
+    color: var(--admin-danger);
+}
+
+.crop-container {
+    position: relative;
+    max-width: 100%;
+    max-height: 400px;
+    margin: 20px 0;
+}
+
+.crop-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin: 15px 0;
+    flex-wrap: wrap;
+}
+
+.aspect-ratio-selector {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.aspect-ratio-btn {
+    padding: 6px 12px;
+    border: 1px solid #ddd;
+    background: white;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s;
+}
+
+.aspect-ratio-btn.active {
+    background: var(--admin-primary);
+    border-color: var(--admin-primary);
+    color: white;
+}
+
+.aspect-ratio-btn:hover:not(.active) {
+    background: #f8f9fa;
+}
+
+.crop-preview {
+    margin-top: 15px;
+    text-align: center;
+}
+
+.crop-preview-title {
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: var(--admin-dark);
+}
+
+.crop-preview-container {
+    display: inline-block;
+    border: 2px dashed #ccc;
+    border-radius: 8px;
+    padding: 10px;
+    background: #f8f9fa;
+}
+
+.crop-preview-image {
+    max-width: 200px;
+    max-height: 150px;
+    border-radius: 4px;
+}
+
+.editor-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #e9ecef;
+}
+
+.btn-editor-cancel {
+    background: #6c757d;
+    border-color: #6c757d;
+    color: white;
+}
+
+.btn-editor-apply {
+    background: var(--admin-primary);
+    border-color: var(--admin-primary);
+    color: white;
+}
+
 /* CSS Variables */
 :root {
     --admin-primary: #007AFF;

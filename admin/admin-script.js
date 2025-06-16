@@ -860,7 +860,19 @@ function createProjectModal() {
                     </div>
                     <div class="form-group">
                         <label for="projectImage">תמונה</label>
+                        <div class="upload-guidelines">
+                            <div class="aspect-ratio-info">
+                                <strong>פרופורציה מועדפת: 3:2</strong>
+                                <span class="example">(לדוגמה: 600x400, 900x600 פיקסלים)</span>
+                            </div>
+                            <div class="technical-specs">
+                                <span>• איכות גבוהה • JPG/PNG • עד 5MB</span>
+                            </div>
+                        </div>
                         <input type="file" id="projectImage" class="form-control" accept="image/*">
+                        <button type="button" class="btn btn-secondary btn-sm image-editor-btn" data-target="projectImage" style="margin-top: 5px; display: none;">
+                            ✂️ ערוך תמונה
+                        </button>
                         <div id="projectImagePreview" style="margin-top: 10px;"></div>
                     </div>
                     <div class="form-group">
@@ -896,43 +908,89 @@ function createProjectModal() {
         closeModal('projectModal');
     });
     
-    // Add image preview functionality
+    // Add image preview functionality with editor integration
     document.getElementById('projectImage').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (file) {
-            // Validate file type
-            if (!file.type.startsWith('image/')) {
-                showNotification('נא לבחור קובץ תמונה תקין', 'error');
-                return;
-            }
-            
-            // Validate file size (max 5MB)
-            if (file.size > 5 * 1024 * 1024) {
-                showNotification('גודל התמונה לא יכול לעלות על 5MB', 'error');
-                return;
-            }
-            
-            // Upload image to server
-            const saveButton = document.querySelector('[data-action="save-project"]');
-            if (saveButton) {
-                saveButton.disabled = true;
-                saveButton.textContent = 'מעלה תמונה...';
-            }
-            
-            uploadImageToServer(file, (imageUrl) => {
-                const preview = document.getElementById('projectImagePreview');
-                preview.innerHTML = `<img src="${imageUrl}" style="max-width: 200px; max-height: 150px; object-fit: cover; border-radius: 8px;">`;
-                
-                // Store image URL
-                preview.dataset.imageData = imageUrl;
-                showNotification('התמונה הועלתה בהצלחה', 'success');
-                
-                // Re-enable save button
-                if (saveButton) {
-                    saveButton.disabled = false;
-                    saveButton.textContent = 'שמור';
+            // Use the image editor validation instead
+            if (window.validateImage) {
+                window.validateImage(file).then(() => {
+                    // Show edit button
+                    const editBtn = document.querySelector('[data-target="projectImage"]');
+                    if (editBtn) {
+                        editBtn.style.display = 'inline-block';
+                        editBtn.onclick = function() {
+                            const aspectRatio = window.getRecommendedAspectRatio ? window.getRecommendedAspectRatio('projectImage') : '3:2';
+                            window.openImageEditor(file, 'projectImage', aspectRatio);
+                        };
+                    }
+                    
+                    // Create preview without uploading yet
+                    const preview = document.getElementById('projectImagePreview');
+                    const imageUrl = URL.createObjectURL(file);
+                    preview.innerHTML = `
+                        <img src="${imageUrl}" style="max-width: 200px; max-height: 150px; object-fit: cover; border-radius: 8px;">
+                        <div style="margin-top: 5px; font-size: 12px; color: #666;">
+                            תמונה נבחרה - לחץ "שמור" להעלאה לשרת
+                        </div>
+                    `;
+                    
+                    // Store the file temporarily for later upload
+                    preview.dataset.pendingFile = 'true';
+                    this.dataset.pendingUpload = 'true';
+                    
+                    showNotification('תמונה נבחרה בהצלחה', 'success');
+                    
+                }).catch(error => {
+                    // Clear the input if validation fails
+                    this.value = '';
+                    showNotification(error.message, 'error');
+                    
+                    // Hide edit button
+                    const editBtn = document.querySelector('[data-target="projectImage"]');
+                    if (editBtn) {
+                        editBtn.style.display = 'none';
+                    }
+                });
+            } else {
+                // Fallback to old validation if image editor not loaded
+                if (!file.type.startsWith('image/')) {
+                    showNotification('נא לבחור קובץ תמונה תקין', 'error');
+                    return;
                 }
-            });
+                
+                if (file.size > 5 * 1024 * 1024) {
+                    showNotification('גודל התמונה לא יכול לעלות על 5MB', 'error');
+                    return;
+                }
+                
+                // Upload image to server immediately (old behavior)
+                uploadImageToServerForProject(file);
+            }
+        }
+    });
+}
+
+// Upload project image specifically
+function uploadImageToServerForProject(file) {
+    const saveButton = document.querySelector('[data-action="save-project"]');
+    if (saveButton) {
+        saveButton.disabled = true;
+        saveButton.textContent = 'מעלה תמונה...';
+    }
+    
+    uploadImageToServer(file, (imageUrl) => {
+        const preview = document.getElementById('projectImagePreview');
+        preview.innerHTML = `<img src="${imageUrl}" style="max-width: 200px; max-height: 150px; object-fit: cover; border-radius: 8px;">`;
+        
+        // Store image URL
+        preview.dataset.imageData = imageUrl;
+        showNotification('התמונה הועלתה בהצלחה', 'success');
+        
+        // Re-enable save button
+        if (saveButton) {
+            saveButton.disabled = false;
+            saveButton.textContent = 'שמור';
         }
     });
 }
@@ -1029,10 +1087,45 @@ async function saveProject(projectId) {
         return;
     }
     
+    // Check if there's a pending image upload
+    const projectImageInput = document.getElementById('projectImage');
+    const preview = document.getElementById('projectImagePreview');
+    
+    if (projectImageInput.dataset.pendingUpload === 'true' && projectImageInput.files[0]) {
+        // Upload the image first
+        const saveButton = document.querySelector('[data-action="save-project"]');
+        if (saveButton) {
+            saveButton.disabled = true;
+            saveButton.textContent = 'מעלה תמונה...';
+        }
+        
+        return new Promise((resolve) => {
+            uploadImageToServer(projectImageInput.files[0], async (imageUrl) => {
+                // Clear pending state
+                delete projectImageInput.dataset.pendingUpload;
+                delete preview.dataset.pendingFile;
+                preview.dataset.imageData = imageUrl;
+                
+                // Now save the project with the uploaded image
+                await saveProjectWithImage(projectId, { name, description, type, url, featured }, imageUrl);
+                
+                if (saveButton) {
+                    saveButton.disabled = false;
+                    saveButton.textContent = 'שמור';
+                }
+                resolve();
+            });
+        });
+    } else {
+        // No pending upload, save immediately
+        const imageData = preview.dataset.imageData || null;
+        await saveProjectWithImage(projectId, { name, description, type, url, featured }, imageData);
+    }
+}
+
+async function saveProjectWithImage(projectId, projectData, imageData) {
     const siteData = await getSiteData();
     const projects = siteData.projects || [];
-    const preview = document.getElementById('projectImagePreview');
-    const imageData = preview.dataset.imageData || null;
     // Preparing to save project with image data
     
     if (projectId) {
@@ -1041,11 +1134,11 @@ async function saveProject(projectId) {
         if (index !== -1) {
             projects[index] = { 
                 ...projects[index], 
-                name, 
-                description, 
-                type, 
-                url, 
-                featured,
+                name: projectData.name, 
+                description: projectData.description, 
+                type: projectData.type, 
+                url: projectData.url, 
+                featured: projectData.featured,
                 image: imageData || projects[index].image
             };
         }
@@ -1053,18 +1146,16 @@ async function saveProject(projectId) {
         // Add new
         projects.push({
             id: Date.now(),
-            name,
-            description,
-            type,
-            url,
-            featured,
+            name: projectData.name,
+            description: projectData.description,
+            type: projectData.type,
+            url: projectData.url,
+            featured: projectData.featured,
             image: imageData,
             active: true,
             order: projects.length
         });
     }
-    
-    // Saving projects data to server
     
     // Save the entire site data with updated projects
     siteData.projects = projects;
@@ -1084,16 +1175,14 @@ async function saveProject(projectId) {
         
         if (result.success) {
             showNotification('הפרויקט נשמר בהצלחה', 'success');
-            
-            // Refresh the projects display immediately
-            await loadProjects();
             closeModal('projectModal');
+            loadProjects();
         } else {
-            throw new Error(result.message || 'Failed to save to server');
+            showNotification(result.message || 'שגיאה בשמירת הפרויקט', 'error');
         }
     } catch (error) {
         console.error('Error saving project:', error);
-        showNotification('שגיאה בשמירת הפרויקט: ' + error.message, 'error');
+        showNotification('שגיאה בשמירת הפרויקט', 'error');
     }
     
     // Force update main website

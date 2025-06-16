@@ -329,12 +329,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Load dynamic content from server
 async function loadDynamicContent() {
+    console.log('loadDynamicContent called');
     try {
         // Fetch data from server
+        console.log('Fetching site data...');
         const response = await fetch('/site-data');
         if (!response.ok) throw new Error('Failed to fetch site data');
+        console.log('Site data response:', response.status);
         
         const data = await response.json();
+        console.log('Site data loaded:', data);
         // Site data loaded successfully from server
         
         updatePageContent(data);
@@ -368,16 +372,25 @@ function updatePageContent(data) {
     
     // Update projects with images
     if (data.projects) {
+        console.log('Updating projects with data:', data.projects);
         const projectCards = document.querySelectorAll('.project-card');
+        console.log('Found project cards:', projectCards.length);
+        
         data.projects.forEach((project, index) => {
             if (projectCards[index]) {
                 const projectImage = projectCards[index].querySelector('.project-image');
                 const projectName = projectCards[index].querySelector('h3');
                 const projectDesc = projectCards[index].querySelector('p');
                 
+                console.log(`Project ${index}:`, project.name, 'Image:', project.image);
+                
                 if (projectImage && project.image) {
                     projectImage.innerHTML = `<img src="${project.image}" alt="${project.name}" style="width: 100%; height: 100%; object-fit: cover;">`;
+                    console.log(`Added image for project ${index}`);
+                } else if (projectImage) {
+                    console.log(`No image for project ${index}`);
                 }
+                
                 if (projectName) {
                     projectName.textContent = project.name;
                 }

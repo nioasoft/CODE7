@@ -55,7 +55,7 @@
       "type": "website",
       "url": "",
       "featured": true,
-      "image": "",
+      "image": "https://res.cloudinary.com/dh1ompp1r/image/upload/w_600,h_400,c_fill,g_center,q_auto:best,f_webp/v1750064833/code7/projects/wll2bm5lsam0hwbdpk4n.png",
       "active": true
     },
     {
@@ -65,7 +65,7 @@
       "type": "ecommerce",
       "url": "",
       "featured": true,
-      "image": "",
+      "image": "https://res.cloudinary.com/dh1ompp1r/image/upload/w_600,h_400,c_fill,g_center,q_auto:best,f_webp/v1750065259/code7/projects/ztuwqdcxgdvweobozpfm.jpg",
       "active": true
     },
     {
@@ -238,11 +238,11 @@
         "timeline": "urgent",
         "description": "בבב",
         "timestamp": "2025-06-16T07:52:46.320Z",
-        "status": "contacted",
+        "status": "quoted",
         "price": null,
         "deadline": null,
         "notes": null,
-        "lastUpdated": "2025-06-16T08:16:44.814Z"
+        "lastUpdated": "2025-06-16T09:11:54.815Z"
       },
       {
         "id": 1750060112005,
