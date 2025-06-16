@@ -2639,7 +2639,7 @@ function createSortableInstance(projectsGrid) {
         ghostClass: 'sortable-ghost',
         chosenClass: 'sortable-chosen',
         dragClass: 'sortable-drag',
-        handle: '.project-card',
+        handle: '.project-item',
         onStart: function(evt) {
             document.body.classList.add('dragging');
         },
@@ -2652,7 +2652,7 @@ function createSortableInstance(projectsGrid) {
 async function saveProjectOrder() {
     try {
         const projectsGrid = document.getElementById('projectsGrid');
-        const projectCards = projectsGrid.querySelectorAll('.project-card');
+        const projectCards = projectsGrid.querySelectorAll('.project-item');
         const projectOrder = [];
         
         projectCards.forEach((card, index) => {
