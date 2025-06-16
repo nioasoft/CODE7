@@ -4,6 +4,7 @@ const compression = require('compression');
 const helmet = require('helmet');
 const cors = require('cors');
 const crypto = require('crypto');
+const db = require('./lib/database');
 
 const app = express();
 const PORT = process.env.PORT || process.env.NODEJS_PORT || 5000;
@@ -636,29 +637,8 @@ app.post('/contact', async (req, res) => {
 // Site data endpoint
 app.get('/site-data', async (req, res) => {
     try {
-        const dataPath = path.join(__dirname, 'data', 'siteData.json');
-        
-        // Create data directory if it doesn't exist
-        await fs.mkdir(path.dirname(dataPath), { recursive: true });
-        
-        // Check if file exists, if not create it with default data
-        if (!fsSync.existsSync(dataPath)) {
-            const defaultDataPath = path.join(__dirname, 'data', 'siteData.json');
-            try {
-                const defaultData = JSON.parse(await fs.readFile(defaultDataPath, 'utf8'));
-                await fs.writeFile(dataPath, JSON.stringify(defaultData, null, 2));
-            } catch (error) {
-                console.error('Error reading default data file:', error);
-                // If can't read default file, just copy the existing data file
-                if (fsSync.existsSync(defaultDataPath)) {
-                    await fs.copyFile(defaultDataPath, dataPath);
-                }
-            }
-        }
-        
-        const data = await fs.readFile(dataPath, 'utf8');
-        const jsonData = JSON.parse(data);
-        res.json(jsonData);
+        const siteData = await db.getSiteData();
+        res.json(siteData);
     } catch (error) {
         console.error('Error reading site data:', error);
         
@@ -681,7 +661,6 @@ app.get('/site-data', async (req, res) => {
 // Site data update endpoint
 app.post('/site-data', async (req, res) => {
     try {
-        const dataPath = path.join(__dirname, 'data', 'siteData.json');
         const updatedData = req.body;
         
         // Validate data structure
@@ -692,36 +671,22 @@ app.post('/site-data', async (req, res) => {
             });
         }
         
-        // Preparing to save data to file
+        // Save to Supabase
+        const result = await db.updateSiteData(updatedData);
         
-        // Check if directory exists and is writable
-        try {
-            await fs.access(path.dirname(dataPath), fsSync.constants.W_OK);
-        } catch (accessError) {
-            console.error('Directory not writable:', accessError);
-            // Try to create directory
-            await fs.mkdir(path.dirname(dataPath), { recursive: true });
+        if (result.success) {
+            res.json({ 
+                success: true, 
+                message: 'הנתונים נשמרו בהצלחה ל-Supabase' 
+            });
+        } else {
+            res.status(500).json({ 
+                success: false, 
+                message: 'שגיאה בשמירת הנתונים: ' + result.error
+            });
         }
-        
-        // Write data to file with explicit encoding and mode
-        await fs.writeFile(dataPath, JSON.stringify(updatedData, null, 2), {
-            encoding: 'utf8',
-            mode: 0o644
-        });
-        
-        // Verify write was successful
-        const savedData = await fs.readFile(dataPath, 'utf8');
-        const parsedData = JSON.parse(savedData);
-        
-        // Data saved successfully to file
-        
-        res.json({ 
-            success: true, 
-            message: 'הנתונים נשמרו בהצלחה' 
-        });
     } catch (error) {
         console.error('Error saving site data:', error);
-        console.error('Error details:', error.message, error.code);
         res.status(500).json({ 
             success: false, 
             message: 'שגיאה בשמירת הנתונים: ' + error.message
@@ -741,9 +706,8 @@ app.post('/admin/projects/reorder', requireAuth, async (req, res) => {
             });
         }
         
-        // Read current data
-        const dataPath = path.join(__dirname, 'data', 'siteData.json');
-        const currentData = JSON.parse(await fs.readFile(dataPath, 'utf8'));
+        // Get current data from Supabase
+        const currentData = await db.getSiteData();
         
         // Update project order
         if (currentData.projects && Array.isArray(currentData.projects)) {
@@ -768,8 +732,12 @@ app.post('/admin/projects/reorder', requireAuth, async (req, res) => {
             currentData.projects = reorderedProjects;
         }
         
-        // Save back to file
-        await fs.writeFile(dataPath, JSON.stringify(currentData, null, 2), 'utf8');
+        // Save back to Supabase
+        const updateResult = await db.updateSiteData(currentData);
+        
+        if (!updateResult.success) {
+            throw new Error(updateResult.error);
+        }
         
         res.json({ 
             success: true, 

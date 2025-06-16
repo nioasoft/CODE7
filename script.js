@@ -332,6 +332,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }, 300);
     });
+    
+    // Load dynamic content when page loads
+    loadDynamicContent();
 });
 
 // Load dynamic content from server
@@ -389,7 +392,11 @@ function updatePageContent(data) {
             // Sort projects by order field (for drag & drop reordering)
             const sortedProjects = data.projects
                 .filter(project => project.active)
-                .sort((a, b) => (a.order || 0) - (b.order || 0));
+                .sort((a, b) => {
+                    const orderA = a.order !== undefined ? a.order : a.id;
+                    const orderB = b.order !== undefined ? b.order : b.id;
+                    return orderA - orderB;
+                });
             
             // Create project cards dynamically from JSON
             sortedProjects.forEach((project) => {

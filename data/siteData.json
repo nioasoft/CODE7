@@ -75,7 +75,7 @@
       "type": "app",
       "url": "",
       "featured": false,
-      "image": "",
+      "image": "https://res.cloudinary.com/dh1ompp1r/image/upload/w_600,h_400,c_fill,g_center,q_auto:best,f_webp/v1750076605/code7/projects/pfkyovml4mjt2ezcuazw.png",
       "active": true
     },
     {
@@ -131,177 +131,6 @@
   ],
   "testimonials": [
     {
-      "id": 1,
-      "name": "דוד כהן",
-      "role": "מנכ\"ל חברת השקעות",
-      "content": "CODE7 הפכו את החזון שלנו למציאות. האתר החדש שלנו לא רק יפה, אלא גם מביא תוצאות עסקיות מדהימות.",
-      "rating": 5,
-      "active": true
-    },
-    {
-      "id": 2,
-      "name": "שרה לוי",
-      "role": "בעלת חנות אופנה",
-      "content": "המערכת שבנו עבורנו חוללה מהפכה בעסק. המכירות האונליין שלנו גדלו ב-300% תוך חצי שנה!",
-      "rating": 5,
-      "active": true
-    },
-    {
-      "id": 3,
-      "name": "מיכאל רוזנברג",
-      "role": "מנהל סטארטאפ",
-      "content": "מקצועיות ברמה הגבוהה ביותר. הצוות הבין בדיוק מה אנחנו צריכים והעניק לנו פתרון מושלם.",
-      "rating": 5,
-      "active": true
-    },
-    {
-      "id": 4,
-      "name": "רחל אברהם",
-      "role": "יועצת עסקית",
-      "content": "שירות מעולה, תמיכה מהירה ותוצאות שעולות על כל הציפיות. ממליצה בחום!",
-      "rating": 5,
-      "active": true
-    }
-  ],
-  "faq": [
-    {
-      "id": 1,
-      "question": "כמה זמן לוקח לבנות אתר?",
-      "answer": "זמן הפיתוח תלוי במורכבות הפרויקט. אתר תדמית בסיסי יכול להיות מוכן תוך 2-3 שבועות, בעוד שמערכת מורכבת יכולה לקחת 2-3 חודשים.",
-      "active": true
-    },
-    {
-      "id": 2,
-      "question": "האם אתם מספקים אחסון ותחזוקה?",
-      "answer": "כן, אנו מציעים חבילות אחסון ותחזוקה מלאות הכוללות גיבויים, עדכוני אבטחה ותמיכה טכנית שוטפת.",
-      "active": true
-    },
-    {
-      "id": 3,
-      "question": "האם ניתן לעדכן את האתר בעצמי?",
-      "answer": "בהחלט! כל האתרים שלנו מגיעים עם מערכת ניהול תוכן ידידותית בעברית, וכמובן שאנחנו מספקים הדרכה מלאה.",
-      "active": true
-    },
-    {
-      "id": 4,
-      "question": "כמה עולה לבנות אתר?",
-      "answer": "המחיר משתנה בהתאם לצרכים שלכם. אנחנו מציעים מגוון חבילות החל מ-3,000 ₪ לאתר תדמית בסיסי ועד פרויקטים מורכבים יותר.",
-      "active": true
-    },
-    {
-      "id": 5,
-      "question": "האם האתרים שלכם מותאמים למובייל?",
-      "answer": "כמובן! כל האתרים שלנו בנויים בגישת Mobile First ומותאמים לכל סוגי המכשירים - סמארטפונים, טאבלטים ומחשבים.",
-      "active": true
-    },
-    {
-      "id": 6,
-      "question": "איזה טכנולוגיות אתם משתמשים?",
-      "answer": "אנחנו עובדים עם הטכנולוגיות המתקדמות ביותר: React, Node.js, MongoDB, WordPress ועוד, בהתאם לצרכי הפרויקט.",
-      "active": true
-    },
-    {
-      "id": 7,
-      "question": "האם אתם מספקים קידום אתרים (SEO)?",
-      "answer": "כן, כל האתרים שלנו בנויים עם תשתית מותאמת למנועי חיפוש. אנו גם מציעים שירותי SEO וקידום ממומן מתקדמים.",
-      "active": true
-    },
-    {
-      "id": 8,
-      "question": "מה כולל התהליך?",
-      "answer": "התהליך כולל: אפיון צרכים, עיצוב UI/UX, פיתוח, בדיקות, העלאה לאוויר והדרכה. אנחנו מלווים אתכם בכל שלב.",
-      "active": true
-    },
-    {
-      "id": 9,
-      "question": "האם יש אחריות על העבודה?",
-      "answer": "בהחלט! אנו נותנים אחריות של 6 חודשים על כל פרויקט, הכוללת תיקוני באגים ועדכונים קטנים.",
-      "active": true
-    },
-    {
-      "id": 10,
-      "question": "איך מתחילים לעבוד איתכם?",
-      "answer": "פשוט מאוד! צרו איתנו קשר דרך הטופס באתר או בטלפון, נקבע פגישת ייעוץ חינמית ונבנה יחד את הפתרון המושלם עבורכם.",
-      "active": true
-    }
-  ],
-  "contact": {
-    "fields": [],
-    "submissions": [
-      {
-        "id": 1750060366320,
-        "name": "Asaf Benatia",
-        "email": "asaf@giggsi.co.il",
-        "phone": "0507778080",
-        "projectType": "ecommerce",
-        "budget": "5000-10000",
-        "timeline": "urgent",
-        "description": "בבב",
-        "timestamp": "2025-06-16T07:52:46.320Z",
-        "status": "quoted",
-        "price": null,
-        "deadline": null,
-        "notes": null,
-        "lastUpdated": "2025-06-16T09:11:54.815Z"
-      },
-      {
-        "id": 1750060112005,
-        "name": "Asaf Benatia",
-        "email": "asaf@giggsi.co.il",
-        "phone": "0507778080",
-        "projectType": "ecommerce",
-        "budget": "5000-10000",
-        "timeline": "urgent",
-        "description": "dd",
-        "timestamp": "2025-06-16T07:48:32.005Z",
-        "status": "new",
-        "price": 5000,
-        "deadline": null,
-        "notes": "קיבלת התעה",
-        "lastUpdated": "2025-06-16T08:21:12.611Z"
-      }
-    ]
-  },
-  "design": {
-    "colors": {
-      "primary": "#007AFF",
-      "dark": "#1D1D1F",
-      "light": "#F2F2F7"
-    },
-    "typography": {
-      "fontFamily": "Heebo",
-      "sizes": {
-        "h1": 48,
-        "h2": 36,
-        "body": 16
-      }
-    },
-    "layout": {
-      "sectionOrder": [
-        "hero",
-        "services",
-        "projects",
-        "testimonials",
-        "contact",
-        "faq"
-      ],
-      "sectionVisibility": {
-        "hero": true,
-        "services": true,
-        "projects": true,
-        "testimonials": true,
-        "contact": true,
-        "faq": true
-      }
-    }
-  },
-  "seo": {
-    "title": "CODE7 - יוצרים עבורך נוכחות דיגיטלית מושלמת",
-    "description": "CODE7 - פתרונות מותאמים אישית לאתרים, אפליקציות ומערכות ניהול עסקיות.",
-    "keywords": "פיתוח אתרים, עיצוב אתרים, אפליקציות, מערכות ניהול, חנויות אונליין"
-  },
-  "testimonials": [
-    {
       "id": "testimonial1",
       "name": "שרה כהן",
       "company": "",
@@ -311,7 +140,7 @@
       "image": ""
     },
     {
-      "id": "testimonial2", 
+      "id": "testimonial2",
       "name": "דני לוי",
       "company": "",
       "role": "בעל חנות ספרים",
@@ -390,6 +219,81 @@
       "answer": "כן, אנו מטפלים ברכישת דומיין, הגדרת אחסון מהיר ואמין, והגדרת אימיילים עסקיים. שירות מקיף מקצה לקצה."
     }
   ],
+  "contact": {
+    "fields": [],
+    "submissions": [
+      {
+        "id": 1750060366320,
+        "name": "Asaf Benatia",
+        "email": "asaf@giggsi.co.il",
+        "phone": "0507778080",
+        "projectType": "ecommerce",
+        "budget": "5000-10000",
+        "timeline": "urgent",
+        "description": "בבב",
+        "timestamp": "2025-06-16T07:52:46.320Z",
+        "status": "quoted",
+        "price": null,
+        "deadline": null,
+        "notes": null,
+        "lastUpdated": "2025-06-16T09:11:54.815Z"
+      },
+      {
+        "id": 1750060112005,
+        "name": "Asaf Benatia",
+        "email": "asaf@giggsi.co.il",
+        "phone": "0507778080",
+        "projectType": "ecommerce",
+        "budget": "5000-10000",
+        "timeline": "urgent",
+        "description": "dd",
+        "timestamp": "2025-06-16T07:48:32.005Z",
+        "status": "new",
+        "price": 5000,
+        "deadline": null,
+        "notes": "קיבלת התעה",
+        "lastUpdated": "2025-06-16T08:21:12.611Z"
+      }
+    ]
+  },
+  "design": {
+    "colors": {
+      "primary": "#007AFF",
+      "dark": "#1D1D1F",
+      "light": "#F2F2F7"
+    },
+    "typography": {
+      "fontFamily": "Heebo",
+      "sizes": {
+        "h1": 48,
+        "h2": 36,
+        "body": 16
+      }
+    },
+    "layout": {
+      "sectionOrder": [
+        "hero",
+        "services",
+        "projects",
+        "testimonials",
+        "contact",
+        "faq"
+      ],
+      "sectionVisibility": {
+        "hero": true,
+        "services": true,
+        "projects": true,
+        "testimonials": true,
+        "contact": true,
+        "faq": true
+      }
+    }
+  },
+  "seo": {
+    "title": "CODE7 - יוצרים עבורך נוכחות דיגיטלית מושלמת",
+    "description": "CODE7 - פתרונות מותאמים אישית לאתרים, אפליקציות ומערכות ניהול עסקיות.",
+    "keywords": "פיתוח אתרים, עיצוב אתרים, אפליקציות, מערכות ניהול, חנויות אונליין"
+  },
   "settings": {
     "businessName": "CODE7",
     "phone": "055-2882839",
